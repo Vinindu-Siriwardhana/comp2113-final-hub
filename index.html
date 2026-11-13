@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COMP2113 Final Hub</title>
+<meta name="description" content="Study plan, topic notes, practice questions, worked past papers and timed mock exams for the HKU COMP2113 final exam.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b5bf0'/%3E%3Ctext x='32' y='43' font-family='monospace' font-size='30' font-weight='700' text-anchor='middle' fill='white'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<script>
+  try { var t = JSON.parse(localStorage.getItem('c2113') || '{}').theme; if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-text">
+      <p class="eyebrow">HKU · Programming Technologies</p>
+      <h1>COMP2113 Final Hub</h1>
+      <p class="sub">Built from your lecture notes, the 2019-20 paper and the sample paper. Every code answer has been compiled and run.</p>
+    </div>
+    <div class="hero-side">
+      <div class="count" id="count"></div>
+      <label class="date">Exam date <input type="date" id="examDate"></label>
+      <div class="overall">
+        <div class="bar"><i id="overallBar"></i></div>
+        <span id="overallTxt"></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <div class="wrap tabs-in">
+    <button data-tab="plan">Study plan</button>
+    <button data-tab="types">Exam format</button>
+    <button data-tab="topics">Topics</button>
+    <button data-tab="practice">Practice</button>
+    <button data-tab="papers">Past papers</button>
+    <button data-tab="mock">Mock exam</button>
+    <button data-tab="external">LeetCode / HackerRank</button>
+    <button data-tab="sheet">A4 sheet</button>
+    <span class="spacer"></span>
+    <button class="icon" id="themeBtn" title="Switch light / dark" aria-label="Switch light or dark theme">◐</button>
+  </div>
+</nav>
+
+<main class="wrap" id="view"></main>
+
+<footer class="wrap foot">
+  Progress is saved in this browser only. Check Moodle for this year's exam date, format and rules.
+  <button class="link" id="resetBtn">Reset my progress</button>
+</footer>
+
+<script src="data/topics.js"></script>
+<script src="data/practice.js"></script>
+<script src="data/papers.js"></script>
+<script src="data/plan.js"></script>
+<script src="data/sheet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
