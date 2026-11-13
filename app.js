@@ -24,6 +24,14 @@ PAPERS.forEach(p => p.sections.forEach(s => s.items.forEach(it => {
   it.id = p.id + '-' + it.n.replace(/\W/g, '');
   Q[it.id] = Object.assign({ type: it.opts ? 'mcq' : it.out ? 'trace' : 'short', label: it.n, paper: true }, it);
 })));
+const DQ = {};
+Object.entries(window.DRILL || {}).forEach(([m, rows]) => {
+  DQ[m] = rows.map((r, i) => {
+    const id = 'd-' + m + '-' + i;
+    const clang = r[5] && r[5] !== 'run' ? r[5] : 'cpp';
+    return Q[id] = { type: 'mcq', id, m, q: r[0], opts: r[1], a: r[2], why: r[3], code: r[4], clang };
+  });
+});
 const ui = {};                                   // transient per-question state
 const U = id => ui[id] || (ui[id] = {});
 
@@ -51,7 +59,7 @@ function hl(code, lang) {
 const pre = (code, lang) => `<pre><code style="all:unset">${hl(code, lang || 'cpp')}</code></pre>`;
 
 /* ---------- routing ---------- */
-const TABS = ['plan', 'types', 'topics', 'practice', 'papers', 'mock', 'external', 'sheet'];
+const TABS = ['plan', 'types', 'topics', 'practice', 'drill', 'papers', 'mock', 'external', 'sheet'];
 let route = { tab: 'plan', args: [] };
 function parseHash() {
   const p = decodeURIComponent(location.hash.slice(1)).split(':');
@@ -111,7 +119,7 @@ function renderQ(id, num) {
   let body = '';
   if (q.type === 'mcq') {
     const done = u.picked != null;
-    body = (q.code ? pre(q.code) : '') + '<div class="opts">' + q.opts.map((o, i) => {
+    body = (q.code ? pre(q.code, q.clang) : '') + '<div class="opts">' + q.opts.map((o, i) => {
       const cls = done ? (i === q.a ? ' right' : i === u.picked ? ' wrong' : '') : '';
       return `<button class="opt${isCodey(o) ? ' mono' : ''}${cls}" data-act="pick" data-i="${i}" ${done ? 'disabled' : ''}><b>${'ABCD'[i]}</b><span>${esc(o)}</span></button>`;
     }).join('') + '</div>';
@@ -265,6 +273,23 @@ function viewPractice() {
     <div class="stack">${items.length ? items.map((q, i) => renderQ(q.id, String(i + 1))).join('') : '<p class="lead">Nothing left here. Clear the filter to see everything.</p>'}</div>`;
 }
 
+/* ---------- tab: lesson drills ---------- */
+function viewDrill() {
+  const mods = TOPICS.filter(t => DQ[t.id]);
+  const [mod = mods[0].id, flag = ''] = route.args;
+  const list = DQ[mod] || DQ[mods[0].id];
+  const done = count(list, q => S.q[q.id] === 'ok');
+  const items = list.filter(q => flag !== 'todo' || S.q[q.id] !== 'ok');
+  const total = mods.reduce((n, t) => n + DQ[t.id].length, 0);
+  return `<div class="sec-head"><h2>Lesson drills</h2><span class="meta">${total} detail questions written from the lecture notes</span></div>
+    <p class="lead">One long quiz per lesson, covering the notes line by line, including the small facts. Work through a lesson until every question is correct, then use "Wrong or not done" to repeat the ones you missed.</p>
+    <div class="chips">${mods.map(t => `<button class="chip${mod === t.id ? ' on' : ''}" data-go="drill:${t.id}:${flag}">M${t.n}<span class="n">${count(DQ[t.id], q => S.q[q.id] === 'ok')}/${DQ[t.id].length}</span></button>`).join('')}
+      <button class="chip${flag === 'todo' ? ' on' : ''}" data-go="drill:${mod}:${flag === 'todo' ? '' : 'todo'}">Wrong or not done</button></div>
+    <div class="mod-head"><span class="num">${MOD[mod].n}</span><div><h2>${esc(MOD[mod].title)}</h2><p class="small muted">${done} of ${list.length} correct</p></div></div>
+    <div class="bar ok" style="margin-bottom:14px"><i style="width:${pct([done, list.length])}%"></i></div>
+    <div class="stack">${items.length ? items.map((q, i) => renderQ(q.id, String(i + 1))).join('') : '<p class="lead">All correct in this lesson. Clear the filter to see every question.</p>'}</div>`;
+}
+
 /* ---------- tab: past papers ---------- */
 function viewPapers() {
   const id = route.args[0] || PAPERS[0].id, p = PAPERS.find(x => x.id === id) || PAPERS[0];
@@ -388,10 +413,10 @@ function viewSheet() {
 }
 
 /* ---------- render ---------- */
-const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, practice: viewPractice, papers: viewPapers, mock: viewMock, external: viewExternal, sheet: viewSheet };
+const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, practice: viewPractice, drill: viewDrill, papers: viewPapers, mock: viewMock, external: viewExternal, sheet: viewSheet };
 function render() {
   $('#view').innerHTML = VIEWS[route.tab]();
-  document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice') el.dataset.num = String(i + 1); });
+  document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice' || route.tab === 'drill') el.dataset.num = String(i + 1); });
   header(); timer();
 }
 

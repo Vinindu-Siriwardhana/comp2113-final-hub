@@ -7,9 +7,9 @@ const root = path.join(__dirname, '..');
 const GXX = process.env.GXX || (fs.existsSync('C:/msys64/ucrt64/bin/g++.exe') ? 'C:/msys64/ucrt64/bin/g++.exe' : 'g++');
 const env = Object.assign({}, process.env, { PATH: path.dirname(GXX) + path.delimiter + process.env.PATH });
 
-const ctx = { window: {}, console };
+const ctx = { window: {}, console }; ctx.window = ctx;
 vm.createContext(ctx);
-for (const f of ['topics.js', 'practice.js', 'papers.js', 'plan.js'])
+for (const f of ['topics.js', 'practice.js', 'papers.js', 'plan.js', ...fs.readdirSync(path.join(root, 'data', 'drill')).map(f => 'drill/' + f)])
   vm.runInContext(fs.readFileSync(path.join(root, 'data', f), 'utf8'), ctx, { filename: f });
 const W = ctx.window;
 
@@ -53,6 +53,18 @@ for (const paper of W.PAPERS) for (const s of paper.sections) for (const it of s
   if (it.test) progTest(id, it, it.test.main && !it.test.full && /^\s*y = /.test(it.ans) ? '' : it.ans);
 }
 
+// ---- lesson drills ----
+let drillN = 0;
+const okTag = new RegExp('^<[/]?(code|em|b|strong|sup|br)([ >]|$)');
+for (const [m, rows] of Object.entries(W.DRILL || {})) rows.forEach((r, i) => {
+  const id = 'drill ' + m + ' #' + (i + 1); drillN++;
+  const [q, o, a, w, code, flag] = r;
+  if (!(Array.isArray(o) && o.length === 4 && a >= 0 && a < 4 && q && w)) { fail++; console.log('BAD row ' + id); return; }
+  if (new Set(o).size !== 4) { fail++; console.log('DUPLICATE options ' + id); }
+  for (const t of (q + ' ' + w).match(/<[^>]{0,25}/g) || []) if (!okTag.test(t)) { fail++; console.log('STRAY HTML ' + id + ' ' + JSON.stringify(t)); }
+  if (flag === 'run') run(id, wrap(code), o[a]);
+});
+
 // ---- structural checks ----
 const ids = new Set();
 const all = [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG, ...W.TOPICS.flatMap(t => t.cards)];
@@ -62,6 +74,6 @@ for (const x of [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG]) if (!mods.has(x.m
 for (const q of W.MCQ) if (!(q.a >= 0 && q.a < q.opts.length)) { fail++; console.log('BAD answer index ' + q.id); }
 for (const s of (W.PLAN || [])) for (const t of s.tasks) if (t.go && !/^(topics|types|practice|papers|mock|external|sheet)(:|$)/.test(t.go)) { fail++; console.log('BAD plan link ' + t.go); }
 
-console.log(`\n${pass} passed, ${fail} failed  (MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
+console.log(`\n${pass} passed, ${fail} failed  (drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(fail ? 1 : 0);
