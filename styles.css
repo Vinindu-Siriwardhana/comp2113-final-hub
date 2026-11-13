@@ -1,23 +1,23 @@
 :root {
-  --bg: #f4f5fb; --card: #fff; --soft: #eef0f9; --text: #1a1d2e; --muted: #626a7c; --line: #e2e5f0;
-  --a1: #5b5bf0; --a2: #0891b2; --exam: #c2570c; --exam-bg: #fff1e6; --ok: #15803d; --ok-bg: #e7f6ec;
-  --bad: #b91c1c; --bad-bg: #fdecec; --code-bg: #f6f7fc; --code-text: #1f2437;
+  --bg: #f3f7f5; --card: #fff; --soft: #e8f0ec; --text: #1a1d2e; --muted: #626a7c; --line: #dbe5e0;
+  --a1: #0f766e; --a2: #0369a1; --exam: #c2570c; --exam-bg: #fff1e6; --ok: #15803d; --ok-bg: #e7f6ec;
+  --bad: #b91c1c; --bad-bg: #fdecec; --code-bg: #f4f8f6; --code-text: #1f2437;
   --kw: #6d28d9; --str: #0f766e; --com: #7a8194; --num: #b45309;
   --shadow: 0 1px 2px rgba(20,20,60,.05), 0 8px 24px -12px rgba(20,20,60,.15);
-  --hero: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #06b6d4 120%);
+  --hero: linear-gradient(135deg, #064e3b 0%, #0f766e 55%, #65a30d 130%);
   --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0e1020; --card: #171a2e; --soft: #1e2238; --text: #e9ebf7; --muted: #9aa1b8; --line: #2a2f4a;
-  --a1: #8b8bff; --a2: #38cbe4; --exam: #fb923c; --exam-bg: #33210f; --ok: #4ade80; --ok-bg: #12301f;
-  --bad: #f87171; --bad-bg: #3a1717; --code-bg: #10132a; --code-text: #dfe3f5;
+  --bg: #0b1412; --card: #12201c; --soft: #182a25; --text: #e9ebf7; --muted: #9aa1b8; --line: #25392f;
+  --a1: #34d399; --a2: #7dd3fc; --exam: #fb923c; --exam-bg: #33210f; --ok: #4ade80; --ok-bg: #12301f;
+  --bad: #f87171; --bad-bg: #3a1717; --code-bg: #0d1815; --code-text: #dfe3f5;
   --kw: #b79cff; --str: #5eead4; --com: #7f87a3; --num: #fbbf24;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
 } }
 :root[data-theme="dark"] {
-  --bg: #0e1020; --card: #171a2e; --soft: #1e2238; --text: #e9ebf7; --muted: #9aa1b8; --line: #2a2f4a;
-  --a1: #8b8bff; --a2: #38cbe4; --exam: #fb923c; --exam-bg: #33210f; --ok: #4ade80; --ok-bg: #12301f;
-  --bad: #f87171; --bad-bg: #3a1717; --code-bg: #10132a; --code-text: #dfe3f5;
+  --bg: #0b1412; --card: #12201c; --soft: #182a25; --text: #e9ebf7; --muted: #9aa1b8; --line: #25392f;
+  --a1: #34d399; --a2: #7dd3fc; --exam: #fb923c; --exam-bg: #33210f; --ok: #4ade80; --ok-bg: #12301f;
+  --bad: #f87171; --bad-bg: #3a1717; --code-bg: #0d1815; --code-text: #dfe3f5;
   --kw: #b79cff; --str: #5eead4; --com: #7f87a3; --num: #fbbf24;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
 }
@@ -56,8 +56,8 @@ code { font-family: var(--mono); font-size: .88em; background: var(--soft); padd
 .tabs button { border: 0; background: none; padding: 8px 13px; border-radius: 999px; white-space: nowrap; color: var(--muted); font-weight: 600; font-size: .92rem; }
 .tabs button:hover { background: var(--soft); color: var(--text); }
 .tabs button.on { background: var(--a1); color: #fff; }
-:root[data-theme="dark"] .tabs button.on { color: #0e1020; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button.on { color: #0e1020; } }
+:root[data-theme="dark"] .tabs button.on { color: #0b1412; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs button.on { color: #0b1412; } }
 .spacer { flex: 1; }
 .tabs .icon { font-size: 1.1rem; padding: 6px 10px; }
 
@@ -82,8 +82,8 @@ main { padding-top: 22px; padding-bottom: 40px; min-height: 60vh; }
 .chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px; font-size: .86rem; font-weight: 600; color: var(--muted); }
 .chip:hover { color: var(--text); border-color: var(--a1); }
 .chip.on { background: var(--a1); border-color: var(--a1); color: #fff; }
-:root[data-theme="dark"] .chip.on { color: #0e1020; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip.on { color: #0e1020; } }
+:root[data-theme="dark"] .chip.on { color: #0b1412; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip.on { color: #0b1412; } }
 .chip .n { opacity: .75; font-weight: 500; margin-left: 4px; font-variant-numeric: tabular-nums; }
 .tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: var(--soft); color: var(--muted); white-space: nowrap; }
 .tag.exam { background: var(--exam-bg); color: var(--exam); }
@@ -92,8 +92,8 @@ main { padding-top: 22px; padding-bottom: 40px; min-height: 60vh; }
 .btn { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 7px 14px; font-weight: 600; font-size: .9rem; }
 .btn:hover { border-color: var(--a1); }
 .btn.pri { background: var(--a1); border-color: var(--a1); color: #fff; }
-:root[data-theme="dark"] .btn.pri { color: #0e1020; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.pri { color: #0e1020; } }
+:root[data-theme="dark"] .btn.pri { color: #0b1412; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.pri { color: #0b1412; } }
 .btn.sm { padding: 4px 10px; font-size: .82rem; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .muted { color: var(--muted); }
@@ -133,8 +133,8 @@ pre .k { color: var(--kw); font-weight: 600; } pre .s { color: var(--str); } pre
 .master.on { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); }
 .mod-head { display: flex; gap: 12px; align-items: center; margin: 26px 0 6px; }
 .mod-head .num { width: 34px; height: 34px; border-radius: 10px; background: var(--a1); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
-:root[data-theme="dark"] .mod-head .num { color: #0e1020; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mod-head .num { color: #0e1020; } }
+:root[data-theme="dark"] .mod-head .num { color: #0b1412; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mod-head .num { color: #0b1412; } }
 .mod-head h2 { font-size: 1.2rem; }
 .search { font: inherit; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); min-width: 200px; flex: 1 1 200px; max-width: 320px; }
 

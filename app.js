@@ -9,7 +9,8 @@ const modTag = m => `<span class="tag">M${MOD[m].n} ${esc(MOD[m].title.split(/,|
 
 /* ---------- saved state ---------- */
 const KEY = 'c2113';
-let S = { m: {}, q: {}, plan: {}, ext: {}, date: '', theme: '', mocks: [] };
+const EXAM = '2026-12-14';
+let S = { m: {}, q: {}, plan: {}, ext: {}, date: EXAM, theme: '', mocks: [] };
 try { S = Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
@@ -200,7 +201,7 @@ function viewTypes() {
       <p class="small muted" style="margin-top:10px">2 hours for 100 marks is 1.2 minutes per mark. The final is 30% of the course grade.</p></section>
     <section class="card"><h3 style="font-size:1.02rem;margin-bottom:6px">Rules to confirm on Moodle</h3>
       <ul class="steps"><li>Both papers in your folder allow <b>one A4 sheet of notes, both sides</b>, printed or written. Use the A4 sheet tab to build yours.</li>
-      <li>The 2019-20 paper did not allow a calculator.</li><li>The 2019-20 paper was written on paper and scanned. Your exam date and venue are not in the course files, so check the announcement.</li>
+      <li>The 2019-20 paper did not allow a calculator.</li><li>The 2019-20 paper was written on paper and scanned. Your exam is on 14 December. The venue is not in the course files, so check the announcement.</li>
       <li>The sample paper uses only long questions (shell, Makefile, debugging, file I/O, linked list, STL, C array), so prepare for both styles.</li></ul></section>
   </div>
   <div class="sec-head"><h2>Where the marks were</h2><span class="meta">2019-20 paper, marks per module out of 100</span></div>
@@ -405,7 +406,7 @@ document.addEventListener('click', e => {
     const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
     S.theme = document.documentElement.dataset.theme = dark ? 'light' : 'dark'; return save();
   }
-  if (t.id === 'resetBtn') { if (confirm('Erase all saved progress on this browser?')) { const th = S.theme; S = { m: {}, q: {}, plan: {}, ext: {}, date: '', theme: th, mocks: [] }; save(); render(); } return; }
+  if (t.id === 'resetBtn') { if (confirm('Erase all saved progress on this browser?')) { const th = S.theme; S = { m: {}, q: {}, plan: {}, ext: {}, date: EXAM, theme: th, mocks: [] }; save(); render(); } return; }
   const act = t.dataset.act; if (!act) return;
   if (act === 'print') return window.print();
   if (act === 'mock-start') { buildMock(); render(); return window.scrollTo(0, 0); }
