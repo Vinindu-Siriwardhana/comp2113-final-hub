@@ -372,8 +372,8 @@ function timer() {
 
 /* ---------- tab: external ---------- */
 function viewExternal() {
-  return `<div class="sec-head"><h2>LeetCode and HackerRank</h2><span class="meta">${count(EXTERNAL.flatMap(g => g.items), i => S.ext[i.id])} of ${EXTERNAL.flatMap(g => g.items).length} done</span></div>
-    <p class="lead">Worth doing, in moderation. These sites check your code by running it, which is good for correctness, but the exam is hand-written and stays close to the course notes. Write each solution on paper first, then type it in to check. The lists below are limited to what COMP2113 actually tests.</p>
+  return `<div class="sec-head"><h2>More practice from other sites</h2><span class="meta">${count(EXTERNAL.flatMap(g => g.items), i => S.ext[i.id])} of ${EXTERNAL.flatMap(g => g.items).length} done</span></div>
+    <p class="lead">Start with real HKU papers, then written-exam questions from other universities, then the coding sites. LeetCode and HackerRank check your code by running it, which is good for correctness, but the exam is hand-written and stays close to the course notes, so write each solution on paper first. The lists are limited to what COMP2113 actually tests.</p>
     <div class="stack ext">${EXTERNAL.map(g => `<section class="card"><div class="row"><h3 style="font-size:1.05rem;flex:1">${esc(g.title)}</h3>${modTag(g.m)}</div>
       <p class="why">${esc(g.why)}</p><ul>${g.items.map(i => `<li><input type="checkbox" id="e-${i.id}" data-ext="${i.id}" ${S.ext[i.id] ? 'checked' : ''} aria-label="Done: ${esc(i.t)}">
         <div><a href="${esc(i.u)}" target="_blank" rel="noopener">${esc(i.t)}</a><small>${esc(i.n)}</small></div></li>`).join('')}</ul></section>`).join('')}</div>`;

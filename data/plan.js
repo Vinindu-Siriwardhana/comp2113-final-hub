@@ -120,6 +120,30 @@ window.PLAN = [
 /* External practice. LeetCode and HackerRank mark by running code, so they train correctness.
    The exam is on paper, so always hand-write first, then type it in to check. */
 window.EXTERNAL = [
+  { id: 'x-hku', title: 'HKU · real past papers', m: 'm8',
+    why: 'Nothing beats papers set by the same department. Do these before anything else on this page.',
+    items: [
+      { id: 'x30', t: 'HKU Libraries ExamBase: search COMP2113 and ENGG1340', u: 'https://exambase.lib.hku.hk/', n: 'Official past exam papers, HKU login needed. ENGG1340 was the same course under its old code, so search both. Not every year is released.' },
+    ] },
+  { id: 'x-written', title: 'Written-exam style questions with answers', m: 'm5',
+    why: 'Other universities\' intro C++ exams ask the same things on paper: trace this, fix this, write this function. Skip anything on classes with inheritance, templates or big-O.',
+    items: [
+      { id: 'x31', t: 'USC CS103 final practice (questions with hidden answers)', u: 'https://bytes.usc.edu/cs103/resources/fi/cs103-fa14-practice.html', n: 'Pointers, dynamic memory, C-strings, file I/O, recursion, linked lists. Closest in level to COMP2113.' },
+      { id: 'x32', t: 'USC CS104 linked lists and recursion: trace the output', u: 'https://bytes.usc.edu/cs104/resources/mt1-info/ll-su21/ques-ll-su21.html', n: 'Recursive linked-list functions to trace by hand. Harder than your exam, so good stretch practice.' },
+      { id: 'x33', t: 'Solutions for the USC CS104 linked list questions (PDF)', u: 'https://bytes.usc.edu/cs104/resources/mt1-info/ll-su21/ll-su21-sol.pdf', n: 'Shows the call tree for each answer. Compare with your own trace.' },
+      { id: 'x34', t: 'GeeksforGeeks: practice questions for linked list and recursion', u: 'https://www.geeksforgeeks.org/practice-questions-for-linked-list-and-recursion/', n: '"What does this function do?" questions on recursive list code, with explanations.' },
+      { id: 'x35', t: 'Liang C++ self-test, Chapter 11: pointers and dynamic memory', u: 'https://liveexample-ppe.pearsoncmg.com/selftest/selftestcpp3e?chapter=11', n: 'Multiple choice "what is the output" on pointers. Change the chapter number in the address for other topics: 6 functions, 7 arrays, 10 strings, 13 file I/O, 17 recursion.' },
+    ] },
+  { id: 'x-tools', title: 'Linux, Git, regex and Makefile drills', m: 'm1',
+    why: 'Short interactive sites for the recall-heavy modules. An hour on each is plenty.',
+    items: [
+      { id: 'x36', t: 'Command Challenge: one-line shell tasks in the browser', u: 'https://cmdchallenge.com/', n: 'Each task is one command or pipe, like Section B. Do the first 20.' },
+      { id: 'x37', t: 'Learn Git Branching', u: 'https://learngitbranching.js.org/', n: 'Do "Introduction Sequence" and "Push & Pull". Skip rebase and cherry-pick levels.' },
+      { id: 'x38', t: 'RegexOne: interactive regular expressions', u: 'https://regexone.com/', n: 'Lessons 1 to 10 cover everything grep -E needs in Module 1.' },
+      { id: 'x39', t: 'Makefile Tutorial by example', u: 'https://makefiletutorial.com/', n: 'Read "Getting Started" up to automatic variables. The rest goes beyond the course.' },
+      { id: 'x40', t: 'Python Tutor: visualise C++ code step by step', u: 'https://pythontutor.com/cpp.html', n: 'Not questions, a checker. Paste any pointer or linked-list code and compare its memory diagram with the one you drew.' },
+      { id: 'x41', t: 'HackerRank Data Structures: Linked Lists', u: 'https://www.hackerrank.com/domains/data-structures?filters%5Bsubdomains%5D%5B%5D=linked-lists', n: 'Print, insert at head, insert at tail, insert at position, delete a node, reverse. Do the Easy ones.' },
+    ] },
   { id: 'x-shell', title: 'HackerRank · Linux Shell', m: 'm1',
     why: 'The closest online match to Section A and the pipe question. Each task is one command or one pipe.',
     items: [
