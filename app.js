@@ -305,7 +305,7 @@ let M = null, tick = null;
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 function buildMock() {
   const quota = { m1: 3, m2: 1, m3: 2, m4: 1, m5: 1, m6: 1, m7: 1, m8: 2, m9: 1, m10: 2 };
-  const a = shuffle(Object.entries(quota).flatMap(([m, n]) => shuffle(MCQ.filter(q => q.m === m)).slice(0, n)));
+  const a = shuffle(Object.entries(quota).flatMap(([m, n]) => shuffle([...MCQ, ...(DQ[m] || [])].filter(q => q.m === m)).slice(0, n)));
   const tr = shuffle(TRACE), tPick = [...tr.filter(q => q.m === 'm8').slice(0, 2), ...tr.filter(q => q.m !== 'm8').slice(0, 3)];
   const sh = shuffle(SHORT), sPick = [sh.find(q => q.m === 'm1'), ...sh.filter(q => q.m !== 'm1').slice(0, 2)];
   const pr = shuffle(PROG), pPick = [...pr.filter(q => q.m === 'm8').slice(0, 2), ...pr.filter(q => q.m !== 'm8').slice(0, 2)];
