@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 4</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 4: separate compilation, header files, include guards, Makefile rules, make's rebuild logic, variables and phony targets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>
+.nd{cursor:pointer}
+.nd rect{fill:var(--surface);stroke:var(--line);stroke-width:1.5;transition:fill .15s,stroke .15s}
+.nd:hover rect,.nd:focus-visible rect{stroke:var(--accent)}
+.nd:focus{outline:none}
+.nd.chg rect{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.nd.reb rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.nd text{font-family:var(--f-mono);font-size:14px;pointer-events:none}
+.eg{stroke:var(--line);stroke-width:1.6;fill:none;transition:stroke .15s}
+.eg.hot{stroke:var(--accent);stroke-width:2.4}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px;border:1.5px solid}
+</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 4: Makefile &amp; separate compilation</h1>
+  <p>Splitting a program into files, compiling each one on its own, and letting <code style="background:rgba(255,255,255,.15);color:#fff">make</code> rebuild only what changed. The sample paper asks for a dependency graph and a full Makefile, so learn the pattern once.</p>
+  <div class="chips"><span class="chip">Module 4a notes: Makefile</span><span class="chip">Slides: make tool and Makefile</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#split">Splitting files</a><a href="#stages">4 stages</a><a href="#headers">Headers &amp; guards</a><a href="#rules">Makefile rules</a><a href="#graph">What gets rebuilt?</a><a href="#tricks">Variables &amp; phony</a><a href="#recipe">Exam recipe</a>
+</div></nav>
+
+<div class="band a2"><div class="wrap">
+
+<section id="split">
+  <h2><span class="n">1</span>One program, three files</h2>
+  <p class="lede">Move a function into its own .cpp, and put its declaration in a .h that other files include. Each .cpp is compiled on its own without knowing about the others, which is why the header is needed.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>gcd.h — declaration</h3>
+<pre>#ifndef GCD_H     // if not defined yet…
+#define GCD_H     // …define it now
+int gcd(int a, int b);
+#endif</pre>
+    </div>
+    <div class="card">
+      <h3>gcd.cpp — definition</h3>
+<pre>#include "gcd.h"
+int gcd(int a, int b) {
+    while (a != b) {
+        if (a &gt; b) a -= b;
+        else       b -= a;
+    }
+    return a;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>gcd_main.cpp — uses it</h3>
+<pre>#include &lt;iostream&gt;
+#include "gcd.h"
+using namespace std;
+int main() {
+    int a, b;
+    cin &gt;&gt; a &gt;&gt; b;
+    cout &lt;&lt; "GCD is " &lt;&lt; gcd(a, b);
+}</pre>
+    </div>
+    <div class="card span2">
+      <h3>Compiling it: all at once vs separately</h3>
+      <div class="tbl"><table>
+        <tr><th>Command</th><th>Does</th></tr>
+        <tr><td><code>g++ gcd_main.cpp gcd.cpp -o gcd</code></td><td>compile both and link in one go</td></tr>
+        <tr><td><code>g++ -c gcd.cpp</code></td><td>stages 1–3 only → <code>gcd.o</code> (object code)</td></tr>
+        <tr><td><code>g++ -c gcd_main.cpp</code></td><td>→ <code>gcd_main.o</code></td></tr>
+        <tr><td><code>g++ gcd.o gcd_main.o -o gcd</code></td><td>stage 4: link the objects into the executable</td></tr>
+      </table></div>
+      <p class="muted">Why bother: compile and test files independently; after an edit, recompile only that file and relink (a full Linux build takes hours); ship <code>gcd.h</code> + <code>gcd.o</code> without revealing your source.</p>
+    </div>
+  </div>
+</section>
+
+<section id="stages">
+  <h2><span class="n">2</span>The four stages of compilation</h2>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 900 230" role="img" aria-label="Each cpp file is pre-processed, compiled and assembled separately; the linker joins the .o files into one executable">
+        <defs><marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g font-size="13" class="mono">
+          <rect x="10" y="40" width="120" height="40" rx="6" class="box"/><text x="70" y="65" text-anchor="middle">gcd.cpp</text>
+          <rect x="190" y="40" width="100" height="40" rx="6" class="box"/><text x="240" y="65" text-anchor="middle">gcd.i</text>
+          <rect x="350" y="40" width="100" height="40" rx="6" class="box"/><text x="400" y="65" text-anchor="middle">gcd.s</text>
+          <rect x="510" y="40" width="100" height="40" rx="6" class="box"/><text x="560" y="65" text-anchor="middle">gcd.o</text>
+          <rect x="10" y="130" width="120" height="40" rx="6" class="box"/><text x="70" y="155" text-anchor="middle">gcd_main.cpp</text>
+          <rect x="190" y="130" width="100" height="40" rx="6" class="box"/><text x="240" y="155" text-anchor="middle">gcd_main.i</text>
+          <rect x="350" y="130" width="100" height="40" rx="6" class="box"/><text x="400" y="155" text-anchor="middle">gcd_main.s</text>
+          <rect x="510" y="130" width="100" height="40" rx="6" class="box"/><text x="560" y="155" text-anchor="middle">gcd_main.o</text>
+          <rect x="730" y="85" width="140" height="40" rx="6" class="boxa"/><text x="800" y="110" text-anchor="middle" font-weight="600">gcd (exe)</text>
+        </g>
+        <g>
+          <line x1="130" y1="60" x2="188" y2="60" class="lna" marker-end="url(#b1)"/><line x1="290" y1="60" x2="348" y2="60" class="lna" marker-end="url(#b1)"/><line x1="450" y1="60" x2="508" y2="60" class="lna" marker-end="url(#b1)"/>
+          <line x1="130" y1="150" x2="188" y2="150" class="lna" marker-end="url(#b1)"/><line x1="290" y1="150" x2="348" y2="150" class="lna" marker-end="url(#b1)"/><line x1="450" y1="150" x2="508" y2="150" class="lna" marker-end="url(#b1)"/>
+          <path d="M610 60 C 670 60, 670 100, 728 102" class="lna" marker-end="url(#b1)"/><path d="M610 150 C 670 150, 670 110, 728 108" class="lna" marker-end="url(#b1)"/>
+        </g>
+        <g font-size="12.5" text-anchor="middle">
+          <text x="160" y="205" font-weight="600">① pre-process</text><text x="160" y="222" class="mut">#include / #define pasted in</text>
+          <text x="320" y="205" font-weight="600">② compile</text><text x="320" y="222" class="mut">→ assembly code</text>
+          <text x="480" y="205" font-weight="600">③ assemble</text><text x="480" y="222" class="mut">→ machine-code object</text>
+          <text x="690" y="205" font-weight="600">④ link</text><text x="690" y="222" class="mut">objects + libraries → exe</text>
+          <text x="330" y="24" class="mut">stages 1–3 run once per .cpp  ·  g++ -c stops here</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="headers">
+  <h2><span class="n">3</span>Headers and include guards</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>#include forms</h3>
+      <div class="tbl"><table>
+        <tr><td><code>#include &lt;iostream&gt;</code></td><td>search the system / standard library</td></tr>
+        <tr><td><code>#include "gcd.h"</code></td><td>search your project folder first</td></tr>
+      </table></div>
+      <p class="muted">Either way the pre-processor pastes the file's text in at <b>compile time</b>. Headers are never compiled on their own, and never appear in <code>g++ -c</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Why the guard</h3>
+      <p>If <code>main.cpp</code> includes <code>a.h</code> and <code>b.h</code>, and both include <code>gcd.h</code>, the declarations would be pasted twice. The guard makes the second copy empty: <code>GCD_H</code> is already defined, so everything up to <code>#endif</code> is skipped.</p>
+    </div>
+  </div>
+</section>
+
+<section id="rules">
+  <h2><span class="n">4</span>Makefile rules</h2>
+  <p class="lede">The file must be called <code>Makefile</code> (or <code>makefile</code>), no extension. It is a list of rules; comments start with <code>#</code>.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 860 170" role="img" aria-label="Anatomy of a make rule: target, colon, dependency list, then a tab-indented command">
+        <defs><marker id="b2" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+        <rect x="20" y="30" width="560" height="90" rx="8" class="box"/>
+        <text x="40" y="66" class="mono" font-size="20"><tspan class="acc" font-weight="600">gcd.o</tspan>: <tspan>gcd.cpp gcd.h</tspan></text>
+        <rect x="40" y="84" width="50" height="24" rx="4" class="boxw"/><text x="65" y="101" text-anchor="middle" class="mono warnf" font-size="12">TAB</text>
+        <text x="100" y="102" class="mono" font-size="20">g++ -c gcd.cpp</text>
+        <g font-size="13">
+          <line x1="70" y1="30" x2="70" y2="12" class="ln"/><text x="76" y="16">target: the file to make</text>
+          <line x1="240" y1="44" x2="620" y2="44" class="ln dash" marker-end="url(#b2)"/><text x="630" y="40">dependency list: files the target</text><text x="630" y="56">is built from</text>
+          <line x1="300" y1="96" x2="620" y2="96" class="ln dash" marker-end="url(#b2)"/><text x="630" y="92">command(s) that build it, run in order</text>
+          <text x="630" y="108" class="warnf">must start with a real TAB, never spaces</text>
+          <text x="40" y="150" class="mut">make target  →  build that target.   make (no argument)  →  build the FIRST target in the file.</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>How make decides</h3>
+      <ol class="steps">
+        <li>Look at the target's dependencies. Make any that are out of date first (recursively).</li>
+        <li>A file is <b>out of date</b> if it doesn't exist, or it is <b>older</b> than any of its dependencies (modification time).</li>
+        <li>If the target is out of date, run its commands. If it is up to date, do nothing.</li>
+      </ol>
+      <p class="muted">Result: the minimum number of files gets rebuilt.</p>
+    </div>
+    <div class="card">
+      <h3>Plain Makefile</h3>
+<pre>gcd_main: gcd.o gcd_main.o
+	g++ gcd.o gcd_main.o -o gcd_main
+
+gcd.o: gcd.cpp gcd.h
+	g++ -c gcd.cpp
+
+gcd_main.o: gcd_main.cpp gcd.h
+	g++ -c gcd_main.cpp</pre>
+<pre>$ make gcd_main
+g++ -c gcd.cpp
+g++ -c gcd_main.cpp
+g++ gcd.o gcd_main.o -o gcd_main</pre>
+    </div>
+  </div>
+</section>
+
+<section id="graph">
+  <h2><span class="n">5</span>What gets rebuilt? (census example)</h2>
+  <p class="lede">Click a source file to mark it as edited. Make recompiles every .o that depends on it, then relinks. Header changes spread to every .o whose .cpp includes that header.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="legend"><span><i style="background:var(--warn-soft);border-color:var(--warn)"></i>edited</span><span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>rebuilt by make</span><span><i style="background:var(--surface);border-color:var(--line)"></i>up to date</span></div>
+      <div class="diagram">
+      <svg viewBox="0 0 900 300" id="dep" role="img" aria-label="Dependency graph of census: census depends on census.o, BigInteger.o, Country.o, which depend on cpp and header files">
+        <g id="edges"></g>
+        <g id="nodes"></g>
+      </svg>
+      </div>
+      <div class="out" id="depOut" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <h3>The Makefile behind the graph</h3>
+<pre>census: census.o BigInteger.o Country.o
+	g++ census.o BigInteger.o Country.o -o census
+
+census.o: census.cpp BigInteger.h Country.h
+	g++ -c census.cpp
+
+BigInteger.o: BigInteger.h BigInteger.cpp
+	g++ -c BigInteger.cpp
+
+Country.o: BigInteger.h Country.h Country.cpp
+	g++ -c Country.cpp</pre>
+    </div>
+    <div class="card">
+      <h3>Read the graph bottom-up</h3>
+      <ul class="steps" style="list-style:disc">
+        <li>Bottom row: files you write (.cpp, .h).</li>
+        <li>Middle: one .o per .cpp. Its arrows come from that .cpp and every header it includes.</li>
+        <li>Top: the executable, from all the .o files.</li>
+        <li>Edit <code>census.cpp</code> → rebuild census.o, relink.</li>
+        <li>Edit <code>Country.h</code> → rebuild census.o and Country.o, relink.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="tricks">
+  <h2><span class="n">6</span>Variables, automatic variables and phony targets</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Automatic variables</h3>
+      <div class="tbl"><table>
+        <tr><th>Var</th><th>Means</th><th>In <code>census.o: census.cpp a.h b.h</code></th></tr>
+        <tr><td><code>$@</code></td><td>the target</td><td>census.o</td></tr>
+        <tr><td><code>$^</code></td><td>the whole dependency list</td><td>census.cpp a.h b.h</td></tr>
+        <tr><td><code>$&lt;</code></td><td>the left-most dependency</td><td>census.cpp</td></tr>
+      </table></div>
+      <p class="muted">Your own variables: <code>NAME = value</code>, read with <code>$(NAME)</code>.</p>
+<pre>g++ -c $&lt;          # compile rule: just the .cpp
+g++ $^ -o $@       # link rule: all the .o files</pre>
+    </div>
+    <div class="card">
+      <h3>Complete Makefile from the notes</h3>
+<pre>FLAGS = -pedantic-errors -std=c++11
+
+gcd.o: gcd.cpp gcd.h
+	g++ $(FLAGS) -c $&lt;
+
+gcd_main.o: gcd_main.cpp gcd.h
+	g++ $(FLAGS) -c $&lt;
+
+gcd_main: gcd.o gcd_main.o
+	g++ $(FLAGS) $^ -o $@
+
+clean:
+	rm -f gcd_main gcd.o gcd_main.o gcd.tgz
+
+tar:
+	tar -czvf gcd.tgz *.cpp *.h
+
+.PHONY: clean tar</pre>
+    </div>
+    <div class="card">
+      <h3>Phony targets</h3>
+      <p><code>clean</code> and <code>tar</code> are fake targets: no file is produced, they are shortcuts for a command. <code>make clean</code> deletes the build files; <code>make tar</code> archives the sources.</p>
+      <p>Pitfall: if a file named <code>clean</code> exists, make says <i>'clean' is up to date</i> and does nothing. Listing it under <code>.PHONY</code> makes the command run every time.</p>
+      <div class="tbl"><table>
+        <tr><th>tar flag</th><th>Means</th></tr>
+        <tr><td><code>-c</code></td><td>create an archive</td></tr>
+        <tr><td><code>-z</code></td><td>compress with gzip</td></tr>
+        <tr><td><code>-v</code></td><td>verbose: list files as they go in</td></tr>
+        <tr><td><code>-f gcd.tgz</code></td><td>archive file name</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="recipe">
+  <h2><span class="n">7</span>Exam recipe: write a Makefile from #includes</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li>List every .cpp. Each gives one <code>X.o: X.cpp …</code> rule.</li>
+        <li>For each .cpp, add every header it includes, <b>and</b> every header those headers include (transitively).</li>
+        <li>Executable rule first: <code>prog: all the .o files</code>.</li>
+        <li>Commands: <code>g++ -c X.cpp</code> for objects, <code>g++ a.o b.o -o prog</code> to link.</li>
+        <li>Add <code>clean</code> and <code>.PHONY: clean</code> if asked.</li>
+        <li>Mark each command line's TAB clearly.</li>
+      </ol>
+    </div>
+    <div class="trap">
+      <h3>Module 4 traps</h3>
+      <ul>
+        <li>Spaces instead of a TAB before a command → "missing separator".</li>
+        <li><code>.h</code> files go in dependency lists, never in <code>g++ -c</code>.</li>
+        <li><code>$^</code> in a compile rule passes the headers to g++ too: use <code>$&lt;</code>.</li>
+        <li>Forgetting a transitive header: if thing.h includes gadget.h, thing.o depends on gadget.h.</li>
+        <li>The first rule is the default goal: put the executable first.</li>
+        <li>Name the file exactly <code>Makefile</code>, no <code>.txt</code>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Predict</h3>
+      <div class="qa" style="grid-template-columns:1fr">
+        <details><summary>Everything is built. You edit gcd.h.
+What does `make gcd_main` print?</summary><p>g++ -c gcd.cpp
+g++ -c gcd_main.cpp
+g++ gcd.o gcd_main.o -o gcd_main <span>both .o files depend on gcd.h</span></p></details>
+        <details><summary>Nothing changed since the last build.
+What does `make gcd_main` do?</summary><p>nothing <span>make: 'gcd_main' is up to date.</span></p></details>
+        <details><summary>You edit only gcd_main.cpp.</summary><p>g++ -c gcd_main.cpp
+g++ gcd.o gcd_main.o -o gcd_main</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from Module 4a notes (Makefile) and the "make tool and Makefile" slides.</p></footer>
+<script src="sheet.js"></script>
+<script>
+(function(){
+  var N = {
+    'census':      {x:450,y:40, kind:'exe'},
+    'census.o':    {x:190,y:145,kind:'obj',deps:['census.cpp','BigInteger.h','Country.h']},
+    'BigInteger.o':{x:450,y:145,kind:'obj',deps:['BigInteger.h','BigInteger.cpp']},
+    'Country.o':   {x:710,y:145,kind:'obj',deps:['BigInteger.h','Country.h','Country.cpp']},
+    'census.cpp':  {x:90, y:255,kind:'src'},
+    'BigInteger.h':{x:270,y:255,kind:'src'},
+    'BigInteger.cpp':{x:450,y:255,kind:'src'},
+    'Country.h':   {x:630,y:255,kind:'src'},
+    'Country.cpp': {x:810,y:255,kind:'src'}
+  };
+  N['census'].deps=['census.o','BigInteger.o','Country.o'];
+  var NS='http://www.w3.org/2000/svg', eg=document.getElementById('edges'), nd=document.getElementById('nodes'), out=document.getElementById('depOut');
+  var W=150,H=36, edges=[];
+  Object.keys(N).forEach(function(k){ (N[k].deps||[]).forEach(function(d){
+    var l=document.createElementNS(NS,'path'), a=N[d], b=N[k];
+    l.setAttribute('d','M'+a.x+' '+(a.y-H/2)+' C '+a.x+' '+((a.y+b.y)/2)+', '+b.x+' '+((a.y+b.y)/2)+', '+b.x+' '+(b.y+H/2));
+    l.setAttribute('class','eg'); eg.appendChild(l); edges.push({from:d,to:k,el:l});
+  });});
+  Object.keys(N).forEach(function(k){
+    var g=document.createElementNS(NS,'g'); g.setAttribute('class','nd'); g.setAttribute('tabindex','0'); g.setAttribute('role','button');
+    g.setAttribute('aria-label',(N[k].kind==='src'?'Edit ':'')+k);
+    var r=document.createElementNS(NS,'rect'); r.setAttribute('x',N[k].x-W/2); r.setAttribute('y',N[k].y-H/2); r.setAttribute('width',W); r.setAttribute('height',H); r.setAttribute('rx',7);
+    var t=document.createElementNS(NS,'text'); t.setAttribute('x',N[k].x); t.setAttribute('y',N[k].y+5); t.setAttribute('text-anchor','middle'); t.textContent=k;
+    if(N[k].kind==='exe') t.setAttribute('font-weight','600');
+    g.appendChild(r); g.appendChild(t); nd.appendChild(g); N[k].el=g;
+    if(N[k].kind==='src'){
+      var go=function(){ pick(k); };
+      g.addEventListener('click',go);
+      g.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+    }
+  });
+  function pick(src){
+    var reb={};
+    ['census.o','BigInteger.o','Country.o'].forEach(function(o){ if(N[o].deps.indexOf(src)>=0) reb[o]=1; });
+    if(Object.keys(reb).length) reb['census']=1;
+    Object.keys(N).forEach(function(k){ N[k].el.setAttribute('class','nd'+(k===src?' chg':reb[k]?' reb':'')); });
+    edges.forEach(function(e){ e.el.setAttribute('class','eg'+(reb[e.to]&&(e.from===src||reb[e.from])?' hot':'')); });
+    var cmds=['$ make census   # after editing '+src];
+    ['census.o','BigInteger.o','Country.o'].forEach(function(o){ if(reb[o]) cmds.push('g++ -c '+o.replace('.o','.cpp')); });
+    cmds.push('g++ census.o BigInteger.o Country.o -o census');
+    out.textContent=cmds.join('\n');
+  }
+  pick('Country.h');
+})();
+</script>
+</body>
+</html>

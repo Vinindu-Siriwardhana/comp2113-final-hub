@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 5</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 5, Functions: declarations, prototypes, void, predefined functions, pass by value vs reference, and scope.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 5: Functions</h1>
+  <p>How C++ functions differ from Python's: every parameter and return value has a type, functions must be declared before use, and you choose between passing a copy or the original.</p>
+  <div class="chips"><span class="chip">Slides: C++ Functions for Python Programmers</span><span class="chip">Recursion → see Module 7</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#anatomy">Anatomy</a><a href="#declare">Declare before use</a><a href="#lib">Library functions</a><a href="#pass">Value vs reference</a><a href="#scope">Scope</a><a href="#predict">Predict the output</a>
+</div></nav>
+
+<div class="band a1"><div class="wrap">
+
+<section id="anatomy">
+  <h2><span class="n">1</span>Anatomy of a function</h2>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 880 210" role="img" aria-label="double larger(double x, double y) with return type, name, parameter list and body labelled">
+        <defs><marker id="c1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+        <rect x="20" y="60" width="560" height="120" rx="8" class="box"/>
+        <text x="40" y="96" class="mono" font-size="19"><tspan class="acc" font-weight="600">double</tspan> <tspan font-weight="600">larger</tspan>(<tspan class="acc">double x, double y</tspan>) {</text>
+        <text x="72" y="130" class="mono" font-size="19">return (x &gt;= y) ? x : y;</text>
+        <text x="40" y="164" class="mono" font-size="19">}</text>
+        <g font-size="13">
+          <line x1="70" y1="78" x2="70" y2="40" class="ln" marker-end="url(#c1)"/><text x="40" y="30">return type (void = returns nothing)</text>
+          <line x1="165" y1="78" x2="300" y2="40" class="ln" marker-end="url(#c1)"/><text x="300" y="30">name</text>
+          <line x1="330" y1="80" x2="430" y2="40" class="ln" marker-end="url(#c1)"/><text x="400" y="30">parameters, each with a type</text>
+          <line x1="370" y1="126" x2="600" y2="126" class="ln dash" marker-end="url(#c1)"/><text x="610" y="122">body in { }</text><text x="610" y="140">return sends one value back</text>
+          <text x="40" y="202" class="mut">Call it:  double z = larger(2.5, 5.0);   argument types should match the parameters, the result the variable.</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card span2">
+      <div class="tbl"><table>
+        <tr><th>Topic</th><th>Python</th><th>C++</th></tr>
+        <tr><td>Define</td><td><code>def add(x, y):</code></td><td><code>int add(int x, int y) { … }</code></td></tr>
+        <tr><td>Parameter / return types</td><td>none</td><td>required</td></tr>
+        <tr><td>Nothing to return</td><td>returns <code>None</code></td><td>declare it <code>void</code></td></tr>
+        <tr><td>Body</td><td>indentation</td><td><code>{ }</code></td></tr>
+        <tr><td>Use before definition</td><td>define earlier</td><td>needs a prototype above</td></tr>
+        <tr><td>Return several values</td><td><code>return q, r</code> (tuple)</td><td>one value only; use reference parameters</td></tr>
+        <tr><td>Change caller's variable</td><td>depends on mutability</td><td>explicit: <code>int &amp;x</code></td></tr>
+        <tr><td>Libraries</td><td><code>import math</code></td><td><code>#include &lt;cmath&gt;</code></td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="declare">
+  <h2><span class="n">2</span>Declare before you call</h2>
+  <p class="lede">The compiler reads top to bottom and must know a function's name, parameter types and return type before the first call.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Option A: prototype on top</h3>
+<pre>double larger(double x, double y);  // prototype: ends with ;
+
+int main() {
+    cout &lt;&lt; larger(2.5, 5.0);
+}
+
+double larger(double x, double y) { // definition
+    return (x &gt;= y) ? x : y;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Option B: define above main</h3>
+<pre>double larger(double x, double y) {
+    return (x &gt;= y) ? x : y;
+}
+
+int main() {
+    cout &lt;&lt; larger(2.5, 5.0);
+}</pre>
+      <div class="tbl"><table>
+        <tr><td>Declaration / prototype</td><td>header + <code>;</code>, no body. Parameter names optional: <code>double larger(double, double);</code></td></tr>
+        <tr><td>Definition</td><td>header + body</td></tr>
+        <tr><td>Call</td><td>name + arguments</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="lib">
+  <h2><span class="n">3</span>Predefined (library) functions</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Common ones</h3>
+      <div class="tbl"><table>
+        <tr><th>Call</th><th>Header</th><th>Gives</th></tr>
+        <tr><td><code>sqrt(5.29)</code></td><td><code>&lt;cmath&gt;</code></td><td>2.3</td></tr>
+        <tr><td><code>pow(2, 10)</code></td><td><code>&lt;cmath&gt;</code></td><td>1024 (a double)</td></tr>
+        <tr><td><code>fabs(-2.5)</code></td><td><code>&lt;cmath&gt;</code></td><td>2.5</td></tr>
+        <tr><td><code>ceil(2.1)</code> / <code>floor(2.9)</code></td><td><code>&lt;cmath&gt;</code></td><td>3 / 2</td></tr>
+        <tr><td><code>abs(-3)</code></td><td><code>&lt;cstdlib&gt;</code></td><td>3</td></tr>
+        <tr><td><code>rand()</code></td><td><code>&lt;cstdlib&gt;</code></td><td>0 … RAND_MAX</td></tr>
+        <tr><td><code>srand(time(NULL))</code></td><td><code>&lt;ctime&gt;</code></td><td>seed so runs differ</td></tr>
+        <tr><td><code>exit(1)</code></td><td><code>&lt;cstdlib&gt;</code></td><td>end the program now</td></tr>
+      </table></div>
+<pre>int die = 1 + rand() % 6;   // 1 to 6</pre>
+    </div>
+    <div class="card">
+      <h3>void and return</h3>
+<pre>void print_msg(int x) {     // no value back
+    cout &lt;&lt; x &lt;&lt; endl;
+}
+
+int sign(int n) {
+    if (n &gt; 0) return 1;     // return ends the function
+    if (n &lt; 0) return -1;
+    return 0;
+}</pre>
+      <p class="muted">A non-void function must return a value on every path. <code>return;</code> with no value is allowed in a void function to leave early.</p>
+    </div>
+  </div>
+</section>
+
+<section id="pass">
+  <h2><span class="n">4</span>Pass by value vs pass by reference</h2>
+  <p class="lede">By default C++ copies the argument into the parameter. Add <code>&amp;</code> to the parameter and it becomes another name for the caller's variable.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 900 250" role="img" aria-label="Pass by value copies 10 into x; pass by reference makes x an alias of a">
+        <defs><marker id="c2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <text x="215" y="24" text-anchor="middle" font-weight="600" font-size="15">void square(int x)</text>
+        <text x="665" y="24" text-anchor="middle" font-weight="600" font-size="15">void square(int &amp;x)</text>
+        <line x1="450" y1="10" x2="450" y2="240" class="ln dash"/>
+        <!-- value -->
+        <text x="40" y="62" class="mut" font-size="12">main()</text>
+        <rect x="40" y="70" width="120" height="56" rx="6" class="box"/><text x="56" y="92" class="mono mut" font-size="12">a</text><text x="100" y="112" text-anchor="middle" class="mono" font-size="20" font-weight="600">10</text>
+        <text x="270" y="62" class="mut" font-size="12">square()</text>
+        <rect x="270" y="70" width="120" height="56" rx="6" class="boxa"/><text x="286" y="92" class="mono mut" font-size="12">x (copy)</text><text x="330" y="112" text-anchor="middle" class="mono" font-size="20" font-weight="600">100</text>
+        <line x1="160" y1="98" x2="268" y2="98" class="lna dash" marker-end="url(#c2)"/><text x="214" y="90" text-anchor="middle" class="acc" font-size="12">copy 10</text>
+        <text x="40" y="160" font-size="13">x = x * x changes only the copy.</text>
+        <text x="40" y="180" font-size="13">After the call: <tspan class="mono" font-weight="600">a is still 10</tspan></text>
+        <text x="40" y="220" class="mono mut" font-size="12">square(a);  cout &lt;&lt; a;   // 10</text>
+        <!-- reference -->
+        <text x="520" y="62" class="mut" font-size="12">main() and square() share one box</text>
+        <rect x="560" y="70" width="210" height="56" rx="6" class="boxa"/><text x="576" y="92" class="mono mut" font-size="12">a   ≡   x</text><text x="665" y="112" text-anchor="middle" class="mono" font-size="20" font-weight="600">100</text>
+        <text x="490" y="160" font-size="13">x is another name for a, no copy is made.</text>
+        <text x="490" y="180" font-size="13">After the call: <tspan class="mono acc" font-weight="600">a is 100</tspan></text>
+        <text x="490" y="220" class="mono mut" font-size="12">square(a);  cout &lt;&lt; a;   // 100</text>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>When to use which</h3>
+      <div class="tbl"><table>
+        <tr><th>Need</th><th>Use</th></tr>
+        <tr><td>Only read the value</td><td>by value: <code>int x</code></td></tr>
+        <tr><td>Change the caller's variable</td><td>by reference: <code>int &amp;x</code></td></tr>
+        <tr><td>"Return" 2+ results</td><td>reference out-parameters</td></tr>
+        <tr><td>Swap two variables</td><td>two references</td></tr>
+        <tr><td>Argument is a literal like <code>5</code></td><td>must be by value</td></tr>
+      </table></div>
+      <p class="muted">A reference parameter needs a variable as the argument: <code>square(5)</code> does not compile with <code>int &amp;x</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Returning two values</h3>
+<pre>void divide(int a, int b, int &amp;q, int &amp;r) {
+    q = a / b;
+    r = a % b;
+}
+int q, r;
+divide(10, 3, q, r);   // q = 3, r = 1
+
+void swap(int &amp;a, int &amp;b) {
+    int tmp = a;
+    a = b;
+    b = tmp;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="scope">
+  <h2><span class="n">5</span>Scope</h2>
+  <p class="lede">In C++ every <code>{ }</code> block makes a new scope (in Python only functions, classes and modules do). A variable exists from its declaration to the closing brace of its block.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Block scope and shadowing</h3>
+<pre>int a = 1;              // main's a
+{
+    cout &lt;&lt; a;          // 1  (inner a not declared yet)
+    int a = 2;          // new a hides the outer one
+    cout &lt;&lt; a;          // 2
+}
+cout &lt;&lt; a;              // 1  (inner a is gone)
+
+if (true) { int x = 10; }
+// cout &lt;&lt; x;   ✗ x does not exist here
+
+for (int i = 0; i &lt; 3; i++) { }
+// i does not exist here either</pre>
+    </div>
+    <div class="card">
+      <h3>Scope at a glance</h3>
+      <div class="tbl"><table>
+        <tr><th>Declared</th><th>Visible</th></tr>
+        <tr><td>outside all functions</td><td>global: everywhere below it</td></tr>
+        <tr><td>function parameter</td><td>that function's body only</td></tr>
+        <tr><td>inside a function</td><td>from that line to the function's <code>}</code></td></tr>
+        <tr><td>inside <code>{ }</code> / if / loop</td><td>until that block's <code>}</code></td></tr>
+        <tr><td><code>for (int i…)</code></td><td>the loop only</td></tr>
+      </table></div>
+      <p class="muted">Each call gets fresh local variables. Two functions can both have a local called <code>x</code>; they are different variables.</p>
+    </div>
+    <div class="trap">
+      <h3>Module 5 traps</h3>
+      <ul>
+        <li>Calling a function above its definition with no prototype → "not declared in this scope".</li>
+        <li>A prototype needs the <code>;</code>; a definition must not have one after <code>)</code>.</li>
+        <li>Changing a value parameter never affects the caller.</li>
+        <li>Missing <code>return</code> in a non-void function returns garbage.</li>
+        <li>An inner declaration with the same name hides the outer variable only inside that block.</li>
+        <li><code>pow</code> returns a double: <code>int x = pow(2, 3);</code> converts it back.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">6</span>Predict the output</h2>
+  <div class="qa">
+    <details><summary>void f(int x) { x = x * 2; }
+int a = 5; f(a); cout &lt;&lt; a;</summary><p>5 <span>by value</span></p></details>
+    <details><summary>void f(int &amp;x) { x = x * 2; }
+int a = 5; f(a); cout &lt;&lt; a;</summary><p>10 <span>by reference</span></p></details>
+    <details><summary>void g(int a, int &amp;b) { a++; b++; }
+int x = 1, y = 1; g(x, y);
+cout &lt;&lt; x &lt;&lt; y;</summary><p>12</p></details>
+    <details><summary>int x = 1;
+{ x = 2; int x = 3; x = 4; }
+cout &lt;&lt; x;</summary><p>2 <span>x = 2 changes the outer x before the inner one is declared</span></p></details>
+    <details><summary>int f(int n) { return n * 2; }
+int main() { int n = 3; f(n); cout &lt;&lt; n; }</summary><p>3 <span>the return value is thrown away</span></p></details>
+    <details><summary>void swap(int a, int b) { int t=a; a=b; b=t; }
+int x=1, y=2; swap(x, y); cout &lt;&lt; x &lt;&lt; y;</summary><p>12 <span>swapped the copies only</span></p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from the "C++ Functions for Python Programmers" slides. Recursion is covered with Module 7, where the course slides put it.</p></footer>
+<script src="sheet.js"></script>
+</body>
+</html>

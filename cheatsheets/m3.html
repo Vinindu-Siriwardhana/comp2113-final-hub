@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 3</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 3, C++ Basics: compiling, types, operators, precedence, conversions, I/O, branching and loops.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 3: C++ Basics</h1>
+  <p>Compiling, types, operators and flow of control. Most "write the output" exam questions come from integer division, precedence, ++ and short-circuit logic, so those get the most space.</p>
+  <div class="chips"><span class="chip">Reference notes · 129 pp</span><span class="chip">Slides: C++ for Python programmers</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#compile">Compile &amp; run</a><a href="#python">Python → C++</a><a href="#types">Types &amp; literals</a><a href="#ops">Operators</a><a href="#conv">Conversions</a><a href="#io">cin / cout</a><a href="#branch">Branching</a><a href="#loops">Loops</a><a href="#predict">Predict the output</a>
+</div></nav>
+
+<div class="band a1"><div class="wrap">
+
+<section id="compile">
+  <h2><span class="n">1</span>Compile and run</h2>
+  <p class="lede">C++ is compiled: source code becomes a machine-code executable before it runs. Python is interpreted line by line.</p>
+  <div class="grid">
+    <div class="card span2">
+      <h3>Anatomy of hello.cpp</h3>
+      <div class="diagram">
+      <svg viewBox="0 0 900 250" role="img" aria-label="hello.cpp with each line labelled">
+        <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+        <rect x="16" y="14" width="440" height="222" rx="8" class="box"/>
+        <g class="mono" font-size="15">
+          <text x="34" y="44" class="mut">// my first C++ program</text>
+          <text x="34" y="72">#include &lt;iostream&gt;</text>
+          <text x="34" y="100">using namespace std;</text>
+          <text x="34" y="128">int main() {</text>
+          <text x="58" y="156">cout &lt;&lt; "Hello World!" &lt;&lt; endl;</text>
+          <text x="58" y="184">return 0;</text>
+          <text x="34" y="212">}</text>
+        </g>
+        <g font-size="13">
+          <line x1="250" y1="40" x2="520" y2="40" class="ln dash" marker-end="url(#a1)"/><text x="530" y="44">comment: ignored by the compiler</text>
+          <line x1="230" y1="68" x2="520" y2="68" class="ln dash" marker-end="url(#a1)"/><text x="530" y="72">pre-processor pastes in the I/O library</text>
+          <line x1="230" y1="96" x2="520" y2="96" class="ln dash" marker-end="url(#a1)"/><text x="530" y="100">so you can write cout instead of std::cout</text>
+          <line x1="160" y1="124" x2="520" y2="124" class="ln dash" marker-end="url(#a1)"/><text x="530" y="128">execution always starts at main()</text>
+          <line x1="440" y1="152" x2="520" y2="152" class="ln dash" marker-end="url(#a1)"/><text x="530" y="156">&lt;&lt; inserts into the output stream</text>
+          <line x1="160" y1="180" x2="520" y2="180" class="ln dash" marker-end="url(#a1)"/><text x="530" y="184">0 tells the OS "finished OK"</text>
+          <text x="530" y="212" class="mut">every statement ends with ;  blocks use { }</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Commands</h3>
+<pre>g++ -pedantic-errors -std=c++11 hello.cpp -o hello
+./hello</pre>
+      <div class="tbl"><table>
+        <tr><td><code>-std=c++11</code></td><td>compile as C++11</td></tr>
+        <tr><td><code>-pedantic-errors</code></td><td>reject code that breaks the ISO standard</td></tr>
+        <tr><td><code>-o hello</code></td><td>name the executable (default <code>a.out</code>)</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Reading compiler errors</h3>
+      <ul class="steps" style="list-style:disc">
+        <li>The reported line can be wrong: the real mistake is often on an earlier line.</li>
+        <li>The error message itself can be misleading for the same reason.</li>
+        <li>Fix the <b>first</b> error, recompile, repeat. Later errors are often knock-on effects.</li>
+        <li>Delete <code>using namespace std;</code> and you get "'cout' was not declared in this scope".</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="python">
+  <h2><span class="n">2</span>Coming from Python</h2>
+  <div class="grid">
+    <div class="card span2">
+      <div class="tbl"><table>
+        <tr><th>Topic</th><th>Python</th><th>C++</th></tr>
+        <tr><td>Running</td><td>interpreted: <code>python3 a.py</code></td><td>compile first, then <code>./a</code></td></tr>
+        <tr><td>Program start</td><td>top of the file</td><td><code>int main()</code></td></tr>
+        <tr><td>Blocks</td><td>indentation</td><td><code>{ }</code> (indentation means nothing)</td></tr>
+        <tr><td>Statement end</td><td>newline</td><td><code>;</code></td></tr>
+        <tr><td>Variables</td><td>dynamic typing</td><td>declare a type: <code>int age = 20;</code></td></tr>
+        <tr><td>Uninitialised use</td><td>error</td><td>allowed, holds a garbage value</td></tr>
+        <tr><td>Output / input</td><td><code>print()</code> / <code>input()</code></td><td><code>cout &lt;&lt;</code> / <code>cin &gt;&gt;</code></td></tr>
+        <tr><td>Logic</td><td><code>and or not</code></td><td><code>&amp;&amp; || !</code></td></tr>
+        <tr><td>Characters</td><td>a string of length 1</td><td><code>char</code> with single quotes <code>'A'</code></td></tr>
+        <tr><td><code>3 / 2</code></td><td>1.5</td><td><b>1</b> (both ints → integer division)</td></tr>
+        <tr><td>else-if</td><td><code>elif</code></td><td><code>else if</code></td></tr>
+        <tr><td><code>0 &lt; x &lt; 10</code></td><td>chained comparison</td><td>legal but means <code>(0 &lt; x) &lt; 10</code>: always true. Write <code>0 &lt; x &amp;&amp; x &lt; 10</code></td></tr>
+        <tr><td>Loop</td><td><code>for i in range(1, 21)</code></td><td><code>for (int i = 1; i &lt;= 20; i++)</code></td></tr>
+        <tr><td>Constants</td><td>CAPITALS by convention</td><td><code>const double PI = 3.14159;</code> reassigning is a compile error</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="types">
+  <h2><span class="n">3</span>Variables, types and literals</h2>
+  <p class="lede">A type tells the computer how to read the bits and how much memory to set aside. Sizes below are the usual ones; they depend on the system.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Basic types</h3>
+      <div class="tbl"><table>
+        <tr><th>Type</th><th>Size</th><th>Holds</th></tr>
+        <tr><td><code>char</code></td><td class="num">1 byte</td><td>one character / small integer (0–255)</td></tr>
+        <tr><td><code>bool</code></td><td class="num">1 byte</td><td><code>true</code> (1) or <code>false</code> (0)</td></tr>
+        <tr><td><code>int</code></td><td class="num">4 bytes</td><td>−2,147,483,648 to 2,147,483,647</td></tr>
+        <tr><td><code>float</code></td><td class="num">4 bytes</td><td>decimal, ~7 digits</td></tr>
+        <tr><td><code>double</code></td><td class="num">8 bytes</td><td>±1.7e±308, ~15 digits</td></tr>
+        <tr><td><code>string</code></td><td>varies</td><td>text, needs <code>#include &lt;string&gt;</code></td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Identifier rules</h3>
+      <div class="tbl"><table>
+        <tr><td>First char</td><td>letter or <code>_</code></td></tr>
+        <tr><td>Rest</td><td>letters, digits, <code>_</code></td></tr>
+        <tr><td>Case</td><td>sensitive: <code>radius</code> ≠ <code>Radius</code></td></tr>
+        <tr><td>Not allowed</td><td>keywords (<code>int</code>, <code>return</code>, <code>class</code>…)</td></tr>
+        <tr><td>Valid</td><td><code>_count</code> <code>area2</code> <code>max_score</code></td></tr>
+        <tr><td>Invalid</td><td><code>2area</code> <code>max-score</code> <code>my var</code> <code>double</code></td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Literals and escape sequences</h3>
+      <div class="tbl"><table>
+        <tr><td><code>'A'</code></td><td>char (single quotes)</td></tr>
+        <tr><td><code>"A"</code></td><td>string: 'A' plus a hidden <code>'\0'</code></td></tr>
+        <tr><td><code>1.5e3</code></td><td>scientific: 1500.0</td></tr>
+        <tr><td><code>'\101'</code> <code>'\x41'</code></td><td>'A' in octal / hex</td></tr>
+        <tr><td><code>\n</code> <code>\t</code></td><td>newline, tab</td></tr>
+        <tr><td><code>\\</code> <code>\'</code> <code>\"</code></td><td>backslash, quotes</td></tr>
+        <tr><td><code>\a</code> <code>\b</code> <code>\r</code></td><td>bell, backspace, carriage return</td></tr>
+      </table></div>
+      <p class="muted"><code>cout &lt;&lt; "Hi!\n";</code> is the same as <code>cout &lt;&lt; "Hi!" &lt;&lt; endl;</code></p>
+    </div>
+  </div>
+</section>
+
+<section id="ops">
+  <h2><span class="n">4</span>Operators and precedence</h2>
+  <p class="lede">Higher rows run first. Within a row, left to right, except assignment (right to left). Brackets override everything.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Precedence ladder</h3>
+      <div class="tbl"><table>
+        <tr><th>Level</th><th>Operators</th><th>Assoc.</th></tr>
+        <tr><td>highest</td><td><code>!</code> <code>++</code> <code>--</code> unary <code>+ -</code></td><td>—</td></tr>
+        <tr><td></td><td><code>*</code> <code>/</code> <code>%</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>+</code> <code>-</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>==</code> <code>!=</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>&amp;&amp;</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>||</code></td><td>L → R</td></tr>
+        <tr><td></td><td><code>?:</code></td><td>R → L</td></tr>
+        <tr><td>lowest</td><td><code>=</code> <code>+=</code> <code>-=</code> <code>*=</code> <code>/=</code> <code>%=</code></td><td>R → L</td></tr>
+      </table></div>
+<pre>1 + 2 * 3      // 7
+12 - 11 % 3    // 10   (11 % 3 = 2 first)
+i &lt; lim - 2    // i &lt; (lim - 2)
+(i &lt; lim) - 2  // 1 - 2 = -1</pre>
+    </div>
+    <div class="card">
+      <h3>Logic: truth table</h3>
+      <div class="tbl"><table>
+        <tr><th>A</th><th>B</th><th>A &amp;&amp; B</th><th>A || B</th><th>!A</th></tr>
+        <tr class="num"><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr class="num"><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+        <tr class="num"><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+        <tr class="num"><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+      </table></div>
+      <ul class="steps" style="list-style:disc">
+        <li>Zero is false, <b>any non-zero</b> is true: <code>(3 &amp;&amp; 0)</code> → 0, <code>(-5 || 0)</code> → 1, <code>!3</code> → 0.</li>
+        <li>Short-circuit: <code>&amp;&amp;</code> stops at the first false, <code>||</code> at the first true. <code>n != 0 &amp;&amp; 10 / n &gt; 1</code> is safe.</li>
+        <li>Relational and logical results print as <code>1</code> / <code>0</code>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>++ and -- : prefix vs postfix</h3>
+      <div class="tbl"><table>
+        <tr><th>Code</th><th>Means</th><th>c</th><th>i</th></tr>
+        <tr><td><code>c = ++i;</code></td><td>i = i + 1; c = i;</td><td class="num">1</td><td class="num">1</td></tr>
+        <tr><td><code>c = i++;</code></td><td>c = i; i = i + 1;</td><td class="num">0</td><td class="num">1</td></tr>
+      </table></div>
+      <p class="muted">Both start from <code>c = 0, i = 0</code>. Prefix changes first, then uses. Postfix uses, then changes.</p>
+      <h3>Compound assignment</h3>
+<pre>x *= y + 1;   // x = x * (y + 1)
+x %= y % 3;   // x = x % (y % 3)</pre>
+      <p class="muted">The whole right side is evaluated first.</p>
+    </div>
+    <div class="card">
+      <h3>Arithmetic</h3>
+      <div class="tbl"><table>
+        <tr><th>Expr</th><th>Result</th><th>Why</th></tr>
+        <tr><td><code>7 / 2</code></td><td class="num">3</td><td>int / int truncates</td></tr>
+        <tr><td><code>7 / 2.0</code></td><td class="num">3.5</td><td>one double → double</td></tr>
+        <tr><td><code>-7 / 2</code></td><td class="num">-3</td><td>truncates toward 0</td></tr>
+        <tr><td><code>7 % 3</code></td><td class="num">1</td><td>remainder, ints only</td></tr>
+        <tr><td><code>x % 10</code></td><td></td><td>last digit</td></tr>
+        <tr><td><code>x / 10</code></td><td></td><td>drop last digit</td></tr>
+        <tr><td><code>5 / 0</code></td><td>crash</td><td>runtime error, compiles fine</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="conv">
+  <h2><span class="n">5</span>Type conversions</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>The three rules</h3>
+      <div class="tbl"><table>
+        <tr><th>Rule</th><th>Example</th><th>Result</th></tr>
+        <tr><td class="wrap-ok">Mixed operands: lower type promoted</td><td><code>3.0 / 2</code></td><td>1.5</td></tr>
+        <tr><td class="wrap-ok">Assignment converts to the left side's type</td><td><code>int x = 2.8;</code></td><td>2 (truncated, warning)</td></tr>
+        <tr><td class="wrap-ok">Explicit cast: intended, no warning</td><td><code>int x = (int)2.8;</code></td><td>2</td></tr>
+        <tr><td class="wrap-ok">Nonsense conversions refused</td><td><code>int x = "hi";</code></td><td>compile error</td></tr>
+      </table></div>
+      <p class="muted"><code>double x = 5;</code> stores 5.0. Casting truncates, it never rounds.</p>
+    </div>
+    <div class="card">
+      <h3>char is a small integer (ASCII)</h3>
+      <div class="cells" aria-label="ASCII codes">
+        <div class="cell"><b>'0'</b><small>48</small></div><div class="cell"><b>'9'</b><small>57</small></div>
+        <div class="cell"><b>'A'</b><small>65</small></div><div class="cell"><b>'Z'</b><small>90</small></div>
+        <div class="cell"><b>'a'</b><small>97</small></div><div class="cell"><b>'z'</b><small>122</small></div>
+        <div class="cell"><b class="nul">'\0'</b><small>0</small></div>
+      </div>
+<pre>char ch = 'A' + 1;        // 'B'
+int digit = '7' - '0';    // 7
+char up = 'd' - ('a' - 'A');  // 'D'
+int v = 'A';              // 65</pre>
+    </div>
+  </div>
+</section>
+
+<section id="io">
+  <h2><span class="n">6</span>Basic input and output</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Streams</h3>
+      <div class="diagram sm">
+      <svg viewBox="0 0 520 150" role="img" aria-label="cin reads from keyboard with >>, cout writes to screen with <<">
+        <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <rect x="10" y="50" width="110" height="50" rx="8" class="box"/><text x="65" y="80" text-anchor="middle" font-weight="600">keyboard</text>
+        <rect x="205" y="40" width="110" height="70" rx="8" class="boxa"/><text x="260" y="72" text-anchor="middle" font-weight="600">program</text><text x="260" y="92" text-anchor="middle" class="mut" font-size="12">variables</text>
+        <rect x="400" y="50" width="110" height="50" rx="8" class="box"/><text x="455" y="80" text-anchor="middle" font-weight="600">screen</text>
+        <line x1="120" y1="75" x2="203" y2="75" class="lna" marker-end="url(#a2)"/><text x="162" y="62" text-anchor="middle" class="mono acc" font-size="13">cin &gt;&gt; x</text>
+        <line x1="315" y1="75" x2="398" y2="75" class="lna" marker-end="url(#a2)"/><text x="357" y="62" text-anchor="middle" class="mono acc" font-size="13">cout &lt;&lt; x</text>
+        <text x="260" y="138" text-anchor="middle" class="mut" font-size="12">arrows point the way the data flows</text>
+      </svg>
+      </div>
+<pre>int age; double h, w;
+cout &lt;&lt; "Age, height, weight: ";
+cin &gt;&gt; age &gt;&gt; h &gt;&gt; w;
+cout &lt;&lt; "Age is " &lt;&lt; age &lt;&lt; endl;</pre>
+    </div>
+    <div class="card">
+      <h3>How cin behaves</h3>
+      <ul class="steps" style="list-style:disc">
+        <li>The variable's type decides what is read: <code>int</code> reads digits, <code>char</code> reads one character.</li>
+        <li>Skips leading whitespace, stops at the next whitespace.</li>
+        <li>Nothing is processed until the user presses Enter.</li>
+        <li><code>cout &lt;&lt; 1 &lt;&lt; a;</code> prints them stuck together: add <code>" "</code> yourself.</li>
+        <li><code>cin &gt;&gt; s</code> on a string reads one word; <code>getline(cin, s)</code> reads the whole line.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="branch">
+  <h2><span class="n">7</span>Branching</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>if / else if / else and ?:</h3>
+<pre>if (mark &gt;= 90) {
+    cout &lt;&lt; "A";
+} else if (mark &gt;= 80) {
+    cout &lt;&lt; "B";
+} else {
+    cout &lt;&lt; "F";
+}
+
+cout &lt;&lt; (mark &gt;= 60 ? "passed" : "failed");</pre>
+      <p class="muted"><code>cond ? a : b</code> is an expression with a value; <code>if</code> is a statement.</p>
+    </div>
+    <div class="card">
+      <h3>switch and fall-through</h3>
+<pre>switch (grade) {        // int or char only
+  case 'A': cout &lt;&lt; "4.0"; break;
+  case 'B': cout &lt;&lt; "3.0"; break;
+  case 'C':
+  case 'D': cout &lt;&lt; "pass"; break;  // C and D share
+  default:  cout &lt;&lt; "invalid";
+}</pre>
+      <p class="muted">Without <code>break</code>, execution carries on into the next case's code.</p>
+    </div>
+    <div class="card">
+      <h3>Dangling else</h3>
+<pre>if (x &gt; 5)
+    if (y &gt; 5)
+        cout &lt;&lt; "x and y &gt; 5";
+else                       // pairs with the INNER if
+    cout &lt;&lt; "x &lt;= 5";      // runs when x &gt; 5 and y &lt;= 5</pre>
+      <p class="muted"><code>else</code> pairs with the nearest unmatched <code>if</code>, whatever the indentation says. Use braces.</p>
+    </div>
+    <div class="trap">
+      <h3>Legal but wrong conditions</h3>
+      <ul>
+        <li><code>if (x = 5)</code> assigns 5, always true. Use <code>==</code>.</li>
+        <li><code>if (a &lt; b &lt; c)</code> compares <code>(a&lt;b)</code>, a 0 or 1, with c.</li>
+        <li><code>if (x &gt; 0);</code> the <code>;</code> is the whole body; the block below always runs.</li>
+        <li>No braces: only the next single statement belongs to the if.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="loops">
+  <h2><span class="n">8</span>Loops</h2>
+  <div class="grid">
+    <div class="card span2">
+      <h3>How a for loop runs</h3>
+      <div class="diagram">
+      <svg viewBox="0 0 860 210" role="img" aria-label="for loop flow: init once, check condition, run body, update, back to condition; false exits">
+        <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker>
+        <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+        <text x="430" y="26" text-anchor="middle" class="mono" font-size="15">for ( <tspan class="acc">int i = 0</tspan> ; <tspan class="acc">i &lt; 3</tspan> ; <tspan class="acc">i++</tspan> ) { body }</text>
+        <rect x="20" y="80" width="140" height="54" rx="8" class="box"/><text x="90" y="104" text-anchor="middle" font-weight="600">① init</text><text x="90" y="122" text-anchor="middle" class="mono mut" font-size="12">int i = 0 (once)</text>
+        <polygon points="300,62 370,107 300,152 230,107" class="boxa"/><text x="300" y="104" text-anchor="middle" font-weight="600">② test</text><text x="300" y="121" text-anchor="middle" class="mono" font-size="12">i &lt; 3 ?</text>
+        <rect x="450" y="80" width="140" height="54" rx="8" class="box"/><text x="520" y="104" text-anchor="middle" font-weight="600">③ body</text><text x="520" y="122" text-anchor="middle" class="mut" font-size="12">statements</text>
+        <rect x="660" y="80" width="140" height="54" rx="8" class="box"/><text x="730" y="104" text-anchor="middle" font-weight="600">④ update</text><text x="730" y="122" text-anchor="middle" class="mono mut" font-size="12">i++</text>
+        <line x1="160" y1="107" x2="228" y2="107" class="lna" marker-end="url(#a3)"/>
+        <line x1="370" y1="107" x2="448" y2="107" class="lna" marker-end="url(#a3)"/><text x="409" y="99" text-anchor="middle" font-size="12" class="acc">true</text>
+        <line x1="590" y1="107" x2="658" y2="107" class="lna" marker-end="url(#a3)"/>
+        <path d="M730 134 C 730 190, 300 190, 300 156" class="lna" marker-end="url(#a3)"/><text x="515" y="196" text-anchor="middle" font-size="12" class="mut">back to the test</text>
+        <path d="M300 62 C 300 44, 160 44, 140 52" class="ln" marker-end="url(#a4)"/><text x="190" y="58" font-size="12" class="mut">false → exit</text>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Three loops compared</h3>
+      <div class="tbl"><table>
+        <tr><th>Loop</th><th>Tests</th><th>Min runs</th></tr>
+        <tr><td><code>while (c) { }</code></td><td>before body</td><td class="num">0</td></tr>
+        <tr><td><code>do { } while (c);</code></td><td>after body</td><td class="num">1</td></tr>
+        <tr><td><code>for (init; c; upd) { }</code></td><td>before body</td><td class="num">0</td></tr>
+      </table></div>
+<pre>int answer = 0;
+while (answer != 4) {
+    cout &lt;&lt; "2 * 2 = ";
+    cin &gt;&gt; answer;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>break and continue</h3>
+<pre>for (int i = 0; i &lt; 20; ++i) {
+    if (i % 2 == 0) continue;  // skip evens
+    if (i &gt; 9) break;          // leave the loop
+    cout &lt;&lt; i &lt;&lt; " ";
+}
+// 1 3 5 7 9</pre>
+      <p class="muted"><code>break</code> leaves the nearest loop or switch. <code>continue</code> jumps to the next iteration (in a for loop, the update still runs).</p>
+    </div>
+    <div class="trap">
+      <h3>Module 3 traps</h3>
+      <ul>
+        <li><code>double avg = sum / n;</code> with int sum and n loses the fraction. Use <code>sum / (double)n</code>.</li>
+        <li><code>while (i &lt; n);</code> the semicolon is an empty body: infinite loop.</li>
+        <li><code>do { } while (c)</code> needs a <code>;</code> at the end.</li>
+        <li>An uninitialised local variable is garbage, not 0.</li>
+        <li>Casting truncates: <code>(int)3.99</code> is 3.</li>
+        <li>Missing <code>break</code> in a switch falls through.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">9</span>Predict the output</h2>
+  <p class="lede">Work each one out on paper, then tap to check.</p>
+  <div class="qa">
+    <details><summary>cout &lt;&lt; 7 / 2 * 2.0;</summary><p>6 <span>7/2 is 3 first (int), then 3 * 2.0</span></p></details>
+    <details><summary>cout &lt;&lt; 2.0 * 7 / 2;</summary><p>7 <span>left to right: 14.0 / 2</span></p></details>
+    <details><summary>int i = 5;
+cout &lt;&lt; i++ + ++i;</summary><p>undefined <span>modifying i twice in one expression; the exam avoids this, so should you</span></p></details>
+    <details><summary>int i = 5; int a = i++;
+int b = ++i;
+cout &lt;&lt; a &lt;&lt; b &lt;&lt; i;</summary><p>577</p></details>
+    <details><summary>cout &lt;&lt; (3 &gt; 2 &gt; 1);</summary><p>0 <span>(3&gt;2) is 1, then 1 &gt; 1 is false</span></p></details>
+    <details><summary>int x = 0;
+if (x = 0) cout &lt;&lt; "A";
+else cout &lt;&lt; "B";</summary><p>B <span>x = 0 assigns 0, which is false</span></p></details>
+    <details><summary>int n = 0;
+if (n != 0 &amp;&amp; 10 / n &gt; 1) cout &lt;&lt; "big";
+else cout &lt;&lt; "safe";</summary><p>safe <span>&amp;&amp; stops before dividing by zero</span></p></details>
+    <details><summary>int x = 1234;
+cout &lt;&lt; x / 10 % 100;</summary><p>23 <span>123 % 100</span></p></details>
+    <details><summary>char c = 'a' + 2;
+cout &lt;&lt; c &lt;&lt; (int)c;</summary><p>c99</p></details>
+    <details><summary>int x = 10;
+x -= 3 * 2;
+cout &lt;&lt; x;</summary><p>4</p></details>
+    <details><summary>for (int i = 0; i &lt; 3; i++);
+  cout &lt;&lt; "hi";</summary><p>hi <span>once: the ; is the loop body</span></p></details>
+    <details><summary>int k = 3;
+switch (k) { case 3: cout &lt;&lt; "3";
+  case 4: cout &lt;&lt; "4"; break;
+  default: cout &lt;&lt; "d"; }</summary><p>34 <span>falls through into case 4</span></p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from Module 3 Reference Notes (C++ Basics) and the "C++ Basics for Python Programmers" slides.</p></footer>
+<script src="sheet.js"></script>
+</body>
+</html>

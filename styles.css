@@ -108,6 +108,14 @@ pre .k { color: var(--kw); font-weight: 600; } pre .s { color: var(--str); } pre
 .sess-top h3 { font-size: 1.05rem; }
 .sess-top .when { margin-left: auto; color: var(--muted); font-size: .84rem; font-variant-numeric: tabular-nums; }
 .why { color: var(--muted); font-size: .9rem; margin: 4px 0 8px; }
+.cheat { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--text); transition: border-color .15s, transform .15s; }
+.cheat:hover, .cheat:focus-visible { border-color: var(--a1); transform: translateY(-2px); }
+.cheat h3 { font-size: 1.05rem; }
+.cheat .tag { align-self: flex-start; background: var(--a1); color: #fff; }
+:root[data-theme="dark"] .cheat .tag { color: #0b1412; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cheat .tag { color: #0b1412; } }
+.cheat small { color: var(--a1); font-weight: 600; margin-top: auto; }
+@media (prefers-reduced-motion: reduce) { .cheat { transition: none; } .cheat:hover { transform: none; } }
 .tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .tasks li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; }
 .tasks input { margin-top: 4px; width: 17px; height: 17px; accent-color: var(--a1); flex: none; }

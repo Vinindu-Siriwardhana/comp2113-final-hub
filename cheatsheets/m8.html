@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 8</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 8: pointers, & and *, pointers and arrays, new and delete, memory leaks, dynamic arrays and linked lists.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>
+.ll{display:flex;align-items:center;flex-wrap:wrap;gap:0;font-family:var(--f-mono);font-size:14px;min-height:64px;padding:8px 0}
+.ll .head{color:var(--accent);font-weight:600;margin-right:6px}
+.ll .node{display:flex;border:1.5px solid var(--accent);border-radius:6px;overflow:hidden;background:var(--surface)}
+.ll .node span{padding:8px 10px}
+.ll .node span+span{border-left:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent);padding:8px 7px}
+.ll .node.new{border-color:var(--warn)}
+.ll .node.new span:first-child{color:var(--warn);font-weight:600}
+.ll .arr{color:var(--muted);padding:0 6px}
+.ll .nul{color:var(--warn);font-weight:600}
+.llctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.llctl input{width:80px}
+.llctl button{font-family:var(--f-mono);font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.llctl button:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 8: Pointers, Dynamic Memory &amp; Linked Lists</h1>
+  <p>The heaviest exam topic: the 2019-20 paper gave it four MCQs, three short questions and a 20-mark programming question. Draw boxes and arrows for every pointer question and most of them answer themselves.</p>
+  <div class="chips"><span class="chip">8A Pointers</span><span class="chip">8B Dynamic Memory &amp; Linked List</span><span class="chip">Reference notes</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#mem">Addresses</a><a href="#ptr">&amp; and *</a><a href="#params">Pointer params</a><a href="#arr">Pointers &amp; arrays</a><a href="#dyn">new / delete</a><a href="#dynarr">Dynamic arrays</a><a href="#ll">Linked lists</a><a href="#play">Playground</a><a href="#predict">Predict</a>
+</div></nav>
+
+<div class="band a2"><div class="wrap">
+
+<section id="mem">
+  <h2><span class="n">1</span>Memory, addresses and pointers</h2>
+  <p class="lede">Every variable lives in memory at an address. A pointer is a variable whose value is an address.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 880 200" role="img" aria-label="int n = 42 at address 121112; int *p holds 121112 and points to n">
+        <defs><marker id="e1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g class="mono" font-size="14">
+          <text x="60" y="30" class="mut">address</text><text x="200" y="30" class="mut">value</text><text x="330" y="30" class="mut">variable</text>
+          <text x="60" y="68">121108</text><rect x="160" y="46" width="130" height="34" class="box"/><text x="225" y="68" text-anchor="middle" class="mut">…</text>
+          <text x="60" y="104" class="acc">121112</text><rect x="160" y="82" width="130" height="34" class="boxa"/><text x="225" y="104" text-anchor="middle" font-weight="600">42</text><text x="330" y="104">int n</text>
+          <text x="60" y="140">121116</text><rect x="160" y="118" width="130" height="34" class="box"/><text x="225" y="140" text-anchor="middle" class="mut">…</text>
+          <text x="60" y="176">121120</text><rect x="160" y="154" width="130" height="34" class="box"/><text x="225" y="176" text-anchor="middle" class="acc" font-weight="600">121112</text><text x="330" y="176">int *p</text>
+        </g>
+        <path d="M290 171 C 360 171, 360 99, 294 99" class="lna" marker-end="url(#e1)"/>
+        <g font-size="13">
+          <text x="470" y="60" class="mono">int n = 42;</text><text x="640" y="60" class="mut">n lives at 121112</text>
+          <text x="470" y="90" class="mono">int *p = &amp;n;</text><text x="640" y="90" class="mut">p stores n's address</text>
+          <text x="470" y="120" class="mono">cout &lt;&lt; p;</text><text x="640" y="120" class="mut">121112 (an address)</text>
+          <text x="470" y="150" class="mono">cout &lt;&lt; *p;</text><text x="640" y="150" class="mut">42 (follow the arrow)</text>
+          <text x="470" y="180" class="mono">*p = 7;</text><text x="640" y="180" class="mut">n is now 7</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ptr">
+  <h2><span class="n">2</span>The two operators</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>&amp; and * in context</h3>
+      <div class="tbl"><table>
+        <tr><th>Where</th><th>Written</th><th>Means</th></tr>
+        <tr><td>declaration</td><td><code>int *p;</code></td><td>p is a pointer to int</td></tr>
+        <tr><td>expression</td><td><code>*p</code></td><td>dereference: the value p points to</td></tr>
+        <tr><td>expression</td><td><code>&amp;n</code></td><td>address-of n</td></tr>
+        <tr><td>parameter</td><td><code>int &amp;x</code></td><td>reference (Module 5), not an address</td></tr>
+        <tr><td>between values</td><td><code>a * b</code></td><td>just multiplication</td></tr>
+      </table></div>
+<pre>int* p1, p2;     // p1 is int*, p2 is a plain int!
+int *p3, *p4;    // both pointers: * on each name
+int *q = NULL;   // points nowhere; check before *q
+if (q != NULL) cout &lt;&lt; *q;</pre>
+    </div>
+    <div class="card">
+      <h3>Pointer to a struct</h3>
+<pre>struct Date { int d, m, y; };
+Date today = {15, 11, 2026};
+Date *dp = &amp;today;
+
+(*dp).m = 12;    // brackets needed: . binds tighter than *
+dp-&gt;m = 12;      // same thing, the usual way</pre>
+      <p class="muted">If <code>a</code> is a pointer to a struct, <code>a-&gt;x</code> is <code>(*a).x</code>.</p>
+      <div class="tbl"><table>
+        <tr><th>Error</th><th>When</th></tr>
+        <tr><td><code>*n</code> where n is an int</td><td>compile error</td></tr>
+        <tr><td><code>*p</code> where p is NULL / uninitialised</td><td>runtime crash (segfault)</td></tr>
+        <tr><td><code>int *p = &amp;d;</code> with double d</td><td>compile error: types must match</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="params">
+  <h2><span class="n">3</span>Pointers as parameters</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Swap through addresses</h3>
+<pre>void swap(int *a, int *b) {
+    int t = *a;
+    *a = *b;
+    *b = t;
+}
+int x = 1, y = 2;
+swap(&amp;x, &amp;y);           // pass the addresses</pre>
+      <p class="muted">The pointers themselves are copied, but they hold the caller's addresses, so writing through them changes the caller's variables. This is how C does pass-by-reference (Module 10).</p>
+    </div>
+    <div class="card">
+      <h3>Three ways to write the same swap</h3>
+      <div class="tbl"><table>
+        <tr><th>Style</th><th>Header</th><th>Call</th></tr>
+        <tr><td>value (doesn't work)</td><td><code>swap(int a, int b)</code></td><td><code>swap(x, y)</code></td></tr>
+        <tr><td>reference</td><td><code>swap(int &amp;a, int &amp;b)</code></td><td><code>swap(x, y)</code></td></tr>
+        <tr><td>pointer</td><td><code>swap(int *a, int *b)</code></td><td><code>swap(&amp;x, &amp;y)</code></td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="arr">
+  <h2><span class="n">4</span>Pointers and arrays</h2>
+  <p class="lede">An array's name is the address of element 0. <code>p[i]</code> is exactly <code>*(p + i)</code>, and <code>p + 1</code> moves one <b>element</b>, not one byte.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 860 170" role="img" aria-label="int t[] = {6,5,4,3,2,1}; tPtr points at t[0]; tPtr+3 points at t[3]">
+        <defs><marker id="e2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g class="mono" font-size="16" text-anchor="middle">
+          <rect x="120" y="60" width="90" height="44" class="boxa"/><text x="165" y="88">6</text>
+          <rect x="210" y="60" width="90" height="44" class="box"/><text x="255" y="88">5</text>
+          <rect x="300" y="60" width="90" height="44" class="box"/><text x="345" y="88">4</text>
+          <rect x="390" y="60" width="90" height="44" class="boxa"/><text x="435" y="88">3</text>
+          <rect x="480" y="60" width="90" height="44" class="box"/><text x="525" y="88">2</text>
+          <rect x="570" y="60" width="90" height="44" class="box"/><text x="615" y="88">1</text>
+          <rect x="660" y="60" width="90" height="44" class="boxw" style="stroke-dasharray:5 4"/><text x="705" y="88" class="warnf">?</text>
+        </g>
+        <g class="mono mut" font-size="12" text-anchor="middle">
+          <text x="165" y="124">t[0]</text><text x="255" y="124">t[1]</text><text x="345" y="124">t[2]</text><text x="435" y="124">t[3]</text><text x="525" y="124">t[4]</text><text x="615" y="124">t[5]</text><text x="705" y="124" class="warnf">t + 6</text>
+        </g>
+        <g class="mono" font-size="13">
+          <text x="120" y="24" class="acc">tPtr = t</text><line x1="160" y1="30" x2="165" y2="58" class="lna" marker-end="url(#e2)"/>
+          <text x="370" y="24" class="acc">tPtr + 3</text><line x1="430" y1="30" x2="435" y2="58" class="lna" marker-end="url(#e2)"/>
+          <text x="640" y="24" class="warnf">one past the end</text>
+          <text x="120" y="156" class="mut">int t[] = {6, 5, 4, 3, 2, 1};   int *tPtr = t;   last valid element: t + SIZE - 1</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Equivalent expressions</h3>
+      <div class="tbl"><table>
+        <tr><th>The value 3</th><th>The address of t[3]</th></tr>
+        <tr><td><code>t[3]</code></td><td><code>&amp;t[3]</code></td></tr>
+        <tr><td><code>*(t + 3)</code></td><td><code>t + 3</code></td></tr>
+        <tr><td><code>tPtr[3]</code></td><td><code>tPtr + 3</code></td></tr>
+        <tr><td><code>*(tPtr + 3)</code></td><td><code>&amp;tPtr[3]</code></td></tr>
+      </table></div>
+<pre>int *q = &amp;t[2];   // q[0] is t[2], q[1] is t[3], q[-1] is t[1]
+tPtr++;           // now points at t[1]
+*tPtr++;          // read *tPtr, then move the pointer
+(*tPtr)++;        // add 1 to the value pointed to</pre>
+    </div>
+    <div class="card">
+      <h3>Walking an array with a pointer</h3>
+<pre>int sum = 0;
+for (int *p = t; p &lt; t + 6; p++)
+    sum += *p;
+
+void salary_increase(int *sal, int n) {
+    for (int i = 0; i &lt; n; i++) {
+        *sal = *sal * 1.1;
+        sal++;
+    }
+}</pre>
+      <p class="muted">You can move a pointer variable (<code>p++</code>), but not an array name (<code>t++</code> is an error).</p>
+    </div>
+  </div>
+</section>
+
+<section id="dyn">
+  <h2><span class="n">5</span>Dynamic memory: new and delete</h2>
+  <p class="lede">Local variables live on the stack and vanish when their function ends. <code>new</code> takes memory from the free store (heap) that lasts until you <code>delete</code> it.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 880 190" role="img" aria-label="Stack holds pointer p; free store holds the int created by new; delete returns it">
+        <defs><marker id="e3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <rect x="20" y="20" width="250" height="150" rx="10" class="box"/><text x="36" y="44" font-weight="600">Stack</text><text x="36" y="62" class="mut" font-size="12">locals, freed automatically</text>
+        <rect x="60" y="90" width="170" height="44" rx="6" class="boxa"/><text x="72" y="108" class="mono mut" font-size="12">int *p</text><text x="145" y="126" text-anchor="middle" class="mono" font-size="14">211216</text>
+        <rect x="380" y="20" width="250" height="150" rx="10" class="box"/><text x="396" y="44" font-weight="600">Free store (heap)</text><text x="396" y="62" class="mut" font-size="12">yours until you delete it</text>
+        <rect x="430" y="90" width="150" height="44" rx="6" class="boxa"/><text x="442" y="108" class="mono mut" font-size="12">211216</text><text x="505" y="126" text-anchor="middle" class="mono" font-size="16" font-weight="600">5</text>
+        <line x1="230" y1="112" x2="428" y2="112" class="lna" marker-end="url(#e3)"/>
+        <g class="mono" font-size="13">
+          <text x="660" y="70">int *p = new int;</text>
+          <text x="660" y="98">*p = 5;</text>
+          <text x="660" y="126">delete p;</text>
+          <text x="660" y="154">p = NULL;</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>new / delete pairs</h3>
+      <div class="tbl"><table>
+        <tr><th>Allocate</th><th>Free with</th></tr>
+        <tr><td><code>int *p = new int;</code></td><td><code>delete p;</code></td></tr>
+        <tr><td><code>int *a = new int[n];</code></td><td><code>delete [] a;</code></td></tr>
+        <tr><td><code>Node *nd = new Node;</code></td><td><code>delete nd;</code></td></tr>
+      </table></div>
+<pre>int n;  cin &gt;&gt; n;
+int *arr = new int[n];   // size chosen at run time
+for (int i = 0; i &lt; n; i++) arr[i] = i;
+delete [] arr;</pre>
+    </div>
+    <div class="card">
+      <h3>Two classic bugs</h3>
+      <div class="tbl"><table>
+        <tr><th>Bug</th><th>Cause</th><th>Example</th></tr>
+        <tr><td><b>Memory leak</b></td><td class="wrap-ok">last pointer to heap memory lost before delete</td><td><code>p = new int; p = new int;</code></td></tr>
+        <tr><td><b>Dangling pointer</b></td><td class="wrap-ok">using memory after it was deleted</td><td><code>delete p; *p = 3;</code></td></tr>
+      </table></div>
+      <p class="muted">Set pointers to NULL after delete. Never return the address of a local variable: it dies when the function returns.</p>
+    </div>
+  </div>
+</section>
+
+<section id="dynarr">
+  <h2><span class="n">6</span>Growing a dynamic array (the notes' ProductList)</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Steps to add one more element</h3>
+      <ol class="steps">
+        <li>Create a temporary array and copy the contents into it.</li>
+        <li><code>delete []</code> the old array.</li>
+        <li>Re-create it bigger with <code>new</code>.</li>
+        <li>Copy the contents back from the temporary array.</li>
+        <li><code>delete []</code> the temporary array.</li>
+        <li>Put the new item in the free slot.</li>
+      </ol>
+<pre>Product *tmp = new Product[n];
+for (int i = 0; i &lt; n; i++) tmp[i] = list[i];
+delete [] list;
+list = new Product[n + 1];
+for (int i = 0; i &lt; n; i++) list[i] = tmp[i];
+delete [] tmp;
+list[n] = newItem;  n++;</pre>
+      <p class="muted">Deleting from the middle means shifting every later item one place left. Both are slow for big lists, which is what linked lists fix.</p>
+    </div>
+    <div class="card">
+      <h3>Arrays vs linked lists</h3>
+      <div class="tbl"><table>
+        <tr><th></th><th>Array</th><th>Linked list</th></tr>
+        <tr><td>Size</td><td>fixed (or regrow and copy)</td><td>grows one node at a time</td></tr>
+        <tr><td>Insert / delete in the middle</td><td>shift many items</td><td>relink 1–2 pointers</td></tr>
+        <tr><td>Access element i</td><td>instant: <code>a[i]</code></td><td>walk from head</td></tr>
+        <tr><td>Extra memory</td><td>none</td><td>one pointer per node</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="ll">
+  <h2><span class="n">7</span>Linked lists</h2>
+  <p class="lede">Each node holds data and a pointer to the next node. <code>head</code> points to the first node; the last node's <code>next</code> is NULL.</p>
+  <div class="grid">
+    <div class="card span2">
+      <h3>Insert at the head: order of the two steps matters</h3>
+      <div class="diagram">
+      <svg viewBox="0 0 880 200" role="img" aria-label="New node p points to old first node, then head moves to p">
+        <defs><marker id="e4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker>
+        <marker id="e5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arroww"/></marker>
+        <marker id="e6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+        <g class="mono" font-size="15">
+          <text x="20" y="118" font-weight="600" class="acc">head</text>
+          <rect x="300" y="92" width="70" height="40" class="box"/><text x="335" y="118" text-anchor="middle">23</text><rect x="370" y="92" width="34" height="40" class="boxa"/>
+          <rect x="470" y="92" width="70" height="40" class="box"/><text x="505" y="118" text-anchor="middle">62</text><rect x="540" y="92" width="34" height="40" class="boxa"/>
+          <rect x="640" y="92" width="70" height="40" class="box"/><text x="675" y="118" text-anchor="middle">89</text><rect x="710" y="92" width="34" height="40" class="boxa"/>
+          <text x="790" y="118" class="warnf">NULL</text>
+          <rect x="130" y="20" width="70" height="40" class="boxw"/><text x="165" y="46" text-anchor="middle" class="warnf" font-weight="600">15</text><rect x="200" y="20" width="34" height="40" class="boxw"/>
+          <text x="110" y="16" class="mut" font-size="12">p (new node)</text>
+        </g>
+        <line x1="387" y1="112" x2="468" y2="112" class="lna" marker-end="url(#e4)"/><line x1="557" y1="112" x2="638" y2="112" class="lna" marker-end="url(#e4)"/><line x1="727" y1="112" x2="786" y2="112" class="lna" marker-end="url(#e4)"/>
+        <path d="M70 112 C 150 112, 220 130, 298 116" class="ln dash" marker-end="url(#e6)"/><text x="150" y="146" class="mut" font-size="12">old link (replaced in ②)</text>
+        <path d="M217 40 C 280 40, 300 60, 320 90" class="lnw" marker-end="url(#e5)"/><text x="262" y="34" class="warnf" font-size="13" font-weight="600">① p-&gt;next = head;</text>
+        <path d="M70 104 C 90 70, 100 40, 128 40" class="lnw" marker-end="url(#e5)"/><text x="18" y="66" class="warnf" font-size="13" font-weight="600">② head = p;</text>
+        <text x="20" y="186" class="mut" font-size="12">Do ② first and the only pointer to 23 is lost: the rest of the list leaks.</text>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Node, traverse, insert at head</h3>
+<pre>struct Node {
+    int val;
+    Node *next;
+};
+Node *head = NULL;                     // empty list
+
+void insertHead(Node *&amp;head, int v) {  // &amp;: may change head
+    Node *p = new Node;
+    p-&gt;val = v;
+    p-&gt;next = head;                    // ① link first
+    head = p;                          // ② then move head
+}
+
+void print(Node *head) {
+    Node *cur = head;                  // copy: keep head
+    while (cur != NULL) {
+        cout &lt;&lt; cur-&gt;val &lt;&lt; " ";
+        cur = cur-&gt;next;
+    }
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Insert at tail, find</h3>
+<pre>void insertTail(Node *&amp;head, int v) {
+    Node *p = new Node;
+    p-&gt;val = v;  p-&gt;next = NULL;
+    if (head == NULL) { head = p; return; }
+    Node *cur = head;
+    while (cur-&gt;next != NULL)          // stop AT the last node
+        cur = cur-&gt;next;
+    cur-&gt;next = p;
+}
+// with a tail pointer: tail-&gt;next = p; tail = p;
+
+Node *find(Node *head, int num) {
+    for (Node *c = head; c != NULL; c = c-&gt;next)
+        if (c-&gt;val == num) return c;
+    return NULL;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Delete one node, free the list</h3>
+<pre>void removeVal(Node *&amp;head, int v) {
+    if (head == NULL) return;
+    if (head-&gt;val == v) {              // deleting the first node
+        Node *t = head;
+        head = head-&gt;next;
+        delete t;
+        return;
+    }
+    Node *cur = head;                  // stop at the node BEFORE
+    while (cur-&gt;next != NULL &amp;&amp; cur-&gt;next-&gt;val != v)
+        cur = cur-&gt;next;
+    if (cur-&gt;next != NULL) {
+        Node *t = cur-&gt;next;
+        cur-&gt;next = t-&gt;next;           // bypass
+        delete t;
+    }
+}
+
+void deleteAll(Node *&amp;head) {
+    while (head != NULL) {
+        Node *t = head;
+        head = head-&gt;next;             // save next BEFORE delete
+        delete t;
+    }
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Ordered insert and reverse print</h3>
+<pre>void insertSorted(Node *&amp;head, int v) {
+    Node *p = new Node;  p-&gt;val = v;
+    if (head == NULL || v &lt; head-&gt;val) {
+        p-&gt;next = head;  head = p;  return;
+    }
+    Node *cur = head;    // last node with val &lt;= v
+    while (cur-&gt;next != NULL &amp;&amp; cur-&gt;next-&gt;val &lt;= v)
+        cur = cur-&gt;next;
+    p-&gt;next = cur-&gt;next;
+    cur-&gt;next = p;
+}
+// add 62, 89, 23, 38 → 23 38 62 89
+
+void printReverse(Node *head) {   // recursive
+    if (head == NULL) return;     // empty: print nothing
+    printReverse(head-&gt;next);     // rest first
+    cout &lt;&lt; head-&gt;val &lt;&lt; " ";     // then this node
+}</pre>
+    </div>
+    <div class="trap">
+      <h3>Linked-list checklist</h3>
+      <ul>
+        <li>Test three cases: empty list, one node, many nodes.</li>
+        <li>Pass <code>Node *&amp;head</code> when the function may change the first node.</li>
+        <li>To delete a node you need the node <b>before</b> it.</li>
+        <li><code>while (cur != NULL)</code> runs off the end. To stop at the last node, test <code>cur-&gt;next != NULL</code>.</li>
+        <li>After bypassing a node in a remove-all loop, don't advance: the new next might match too.</li>
+        <li>Never move <code>head</code> just to traverse; use a copy.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="play">
+  <h2><span class="n">8</span>Linked-list playground</h2>
+  <p class="lede">Each button runs one of the functions above. The orange node is the one just added.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="llctl">
+        <label for="llv" class="note">value</label><input type="text" id="llv" value="42" inputmode="numeric">
+        <button type="button" data-op="head">insertHead</button>
+        <button type="button" data-op="tail">insertTail</button>
+        <button type="button" data-op="sorted">insertSorted</button>
+        <button type="button" data-op="remove">removeVal</button>
+        <button type="button" data-op="all">deleteAll</button>
+        <button type="button" data-op="reset">reset sample</button>
+      </div>
+      <div class="ll" id="llView" aria-live="polite"></div>
+      <div class="out" id="llLog"></div>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">9</span>Predict the output</h2>
+  <div class="qa">
+    <details><summary>int a = 5; int *p = &amp;a;
+*p = *p + 1; cout &lt;&lt; a;</summary><p>6</p></details>
+    <details><summary>int t[] = {6,5,4,3,2,1};
+int *q = &amp;t[2];
+cout &lt;&lt; q[1] &lt;&lt; *(q - 1);</summary><p>35</p></details>
+    <details><summary>int t[] = {10, 20, 30};
+int *p = t; p++;
+cout &lt;&lt; *p + 1;</summary><p>21 <span>*p is 20, then + 1</span></p></details>
+    <details><summary>int t[] = {10, 20, 30};
+int *p = t;
+cout &lt;&lt; *(p + 1) + 1;</summary><p>21</p></details>
+    <details><summary>string* x, y;
+Which are pointers?</summary><p>only x <span>* binds to the name</span></p></details>
+    <details><summary>Insert 1, 2, 3 with insertHead,
+then print.</summary><p>3 2 1 <span>head insertion reverses the order</span></p></details>
+    <details><summary>int *p = new int(7);
+int *q = p; delete p;
+cout &lt;&lt; *q;</summary><p>undefined <span>q is dangling</span></p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from Module 8 Reference Notes and the 8A Pointers and 8B Dynamic Memory &amp; Linked List slides.</p></footer>
+<script src="sheet.js"></script>
+<script>
+(function(){
+  var list=[23,38,62,89], fresh=-1, view=document.getElementById('llView'), log=document.getElementById('llLog'), inp=document.getElementById('llv');
+  function draw(){
+    var h='<span class="head">head →</span>';
+    list.forEach(function(v,i){ h+='<span class="node'+(i===fresh?' new':'')+'"><span>'+v+'</span><span>•</span></span><span class="arr">→</span>'; });
+    h+='<span class="nul">NULL</span>';
+    view.innerHTML=h;
+  }
+  function val(){ var v=parseInt(inp.value,10); return isNaN(v)?null:v; }
+  document.querySelectorAll('.llctl button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var op=b.dataset.op, v=val(); fresh=-1;
+      if(op==='reset'){ list=[23,38,62,89]; log.textContent='Sample list restored.'; }
+      else if(op==='all'){ log.textContent='deleteAll(head);  // '+list.length+' node(s) deleted, head = NULL'; list=[]; }
+      else if(v===null){ log.textContent='Type a whole number in the value box first.'; }
+      else if(op==='head'){ list.unshift(v); fresh=0; log.textContent='insertHead(head, '+v+');\n  p->next = head;  head = p;'; }
+      else if(op==='tail'){ list.push(v); fresh=list.length-1; log.textContent='insertTail(head, '+v+');\n  '+(list.length===1?'empty list: head = p;':'walk to the last node, then cur->next = p;'); }
+      else if(op==='sorted'){ var i=0; while(i<list.length&&list[i]<=v)i++; list.splice(i,0,v); fresh=i;
+        log.textContent='insertSorted(head, '+v+');\n  '+(i===0?'goes first: p->next = head; head = p;':'after '+list[i-1]+': p->next = cur->next; cur->next = p;')+(list.some(function(x,k){return k&&x<list[k-1];})?'\n  (list was not sorted, so the position may look odd)':''); }
+      else if(op==='remove'){ var k=list.indexOf(v);
+        if(k<0) log.textContent='removeVal(head, '+v+');\n  not found, nothing deleted';
+        else { log.textContent='removeVal(head, '+v+');\n  '+(k===0?'first node: head = head->next; delete t;':'cur stops at '+list[k-1]+': cur->next = t->next; delete t;'); list.splice(k,1); } }
+      draw();
+    });
+  });
+  log.textContent='Sample list built with insertSorted: 62, 89, 23, 38.';
+  draw();
+})();
+</script>
+</body>
+</html>

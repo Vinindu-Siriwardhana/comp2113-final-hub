@@ -59,7 +59,7 @@ function hl(code, lang) {
 const pre = (code, lang) => `<pre><code style="all:unset">${hl(code, lang || 'cpp')}</code></pre>`;
 
 /* ---------- routing ---------- */
-const TABS = ['plan', 'types', 'topics', 'practice', 'drill', 'papers', 'mock', 'external', 'sheet'];
+const TABS = ['plan', 'types', 'topics', 'cheats', 'practice', 'drill', 'papers', 'mock', 'external', 'sheet'];
 let route = { tab: 'plan', args: [] };
 function parseHash() {
   const p = decodeURIComponent(location.hash.slice(1)).split(':');
@@ -404,6 +404,25 @@ function viewExternal() {
         <div><a href="${esc(i.u)}" target="_blank" rel="noopener">${esc(i.t)}</a><small>${esc(i.n)}</small></div></li>`).join('')}</ul></section>`).join('')}</div>`;
 }
 
+/* ---------- tab: visual cheat sheets ---------- */
+const CHEATS = [
+  { f: 'm1-2', m: 'M1–2', t: 'Linux, Shell Script & Git', d: 'Commands, paths, ls -l anatomy, redirection and pipes, grep regex, Bash variables, quoting, if/for, Git workflow, branching and remotes.', x: 'chmod toggler · grep -E tester' },
+  { f: 'm3', m: 'M3', t: 'C++ Basics', d: 'Python vs C++, types and sizes, precedence ladder, ++ prefix/postfix, integer division, conversions, switch, dangling else, loop flow.', x: '12 predict-the-output cards' },
+  { f: 'm4', m: 'M4', t: 'Makefile & Separate Compilation', d: 'Header files and guards, the four compilation stages, rule anatomy, how make decides, $@ $^ $<, .PHONY, the exam recipe.', x: 'clickable "what gets rebuilt?" graph' },
+  { f: 'm5', m: 'M5', t: 'Functions', d: 'Function anatomy, prototypes, library functions, pass by value vs reference (diagram), returning two values, block scope and shadowing.', x: 'predict-the-output cards' },
+  { f: 'm6', m: 'M6', t: 'Arrays & Strings', d: 'Array memory, passing arrays, linear search, selection sort pass by pass, 2D grids, cctype, C-strings and the string class.', x: 'string-method lab' },
+  { f: 'm7', m: 'M7', t: 'Structs, File I/O & Recursion', d: 'Structs and classes, the open/check/loop/close skeleton, istringstream, iomanip with visible spaces, factorial stack and fib call tree.', x: 'predict-the-output cards' },
+  { f: 'm8', m: 'M8', t: 'Pointers, Dynamic Memory & Linked Lists', d: 'Address diagrams, & and *, pointer arithmetic, stack vs heap, leaks and dangling pointers, growing arrays, every linked-list operation.', x: 'linked-list playground' },
+  { f: 'm9', m: 'M9', t: 'Standard Template Library', d: 'vector, list and map side by side, cost table, begin()/end(), iterator kinds, map pairs, sort() and operator<.', x: 'predict-the-output cards' },
+  { f: 'm10', m: 'M10', t: 'C Programming & GDB', d: 'C vs C++ table, printf/scanf specifiers and widths, string.h, pointer swaps, malloc/free, typedef, GDB commands and a segfault hunt.', x: 'predict-the-output cards' },
+];
+function viewCheats() {
+  return `<div class="sec-head"><h2>Visual cheat sheets</h2><span class="meta">one page per module</span></div>
+    <p class="lead">Each module's notes boiled down to tables, diagrams and small interactive tools, with a "predict the output" set at the end. Use them for a fast first pass or the night before; use the Topics and Practice tabs to drill.</p>
+    <div class="grid2 cheats">${CHEATS.map(c => `<a class="card cheat" href="cheatsheets/${c.f}.html">
+      <span class="tag">${esc(c.m)}</span><h3>${esc(c.t)}</h3><p class="why">${esc(c.d)}</p><small>Interactive: ${esc(c.x)}</small></a>`).join('')}</div>`;
+}
+
 /* ---------- tab: A4 sheet ---------- */
 function viewSheet() {
   return `<div class="no-print"><div class="sec-head"><h2>Your A4 note sheet</h2><span class="meta">prints on one sheet, both sides</span></div>
@@ -413,7 +432,7 @@ function viewSheet() {
 }
 
 /* ---------- render ---------- */
-const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, practice: viewPractice, drill: viewDrill, papers: viewPapers, mock: viewMock, external: viewExternal, sheet: viewSheet };
+const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, cheats: viewCheats, practice: viewPractice, drill: viewDrill, papers: viewPapers, mock: viewMock, external: viewExternal, sheet: viewSheet };
 function render() {
   $('#view').innerHTML = VIEWS[route.tab]();
   document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice' || route.tab === 'drill') el.dataset.num = String(i + 1); });

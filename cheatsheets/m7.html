@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 7</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 7: structs, classes, file input and output, string streams, output formatting with iomanip, and recursion.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>.vis{font-family:var(--f-mono);background:var(--code);padding:1px 6px;border-radius:4px;white-space:pre}.vis i{color:var(--muted);font-style:normal}</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 7: Structs, File I/O &amp; Recursion</h1>
+  <p>Grouping data into your own types, reading and writing files with streams, lining up output with iomanip, and functions that call themselves. The sample paper's file-reading question uses the open / check / loop / close skeleton below.</p>
+  <div class="chips"><span class="chip">Reference notes</span><span class="chip">Slides: Structs, File I/O, and Recursion</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#struct">Structs</a><a href="#sfunc">Structs &amp; functions</a><a href="#class">Classes</a><a href="#files">File I/O</a><a href="#sstream">String streams</a><a href="#format">Formatting</a><a href="#rec">Recursion</a><a href="#predict">Predict</a>
+</div></nav>
+
+<div class="band a1"><div class="wrap">
+
+<section id="struct">
+  <h2><span class="n">1</span>Structs</h2>
+  <p class="lede">A struct groups related variables (members) of any types under one name, like a Python dataclass or a fixed-key dictionary.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Define, declare, initialise, access</h3>
+<pre>struct Student {        // a new type
+    int id;
+    string name;
+    char sex;
+};                      // ← semicolon required
+
+Student s1 = {12345, "Sze Ka Ka", 'F'};  // member order
+Student s2 = s1;        // copy every member
+s2.name = "Chan";       // dot operator
+cout &lt;&lt; s1.name;        // still "Sze Ka Ka"</pre>
+    </div>
+    <div class="card">
+      <h3>One struct variable in memory</h3>
+      <div class="diagram sm">
+      <svg viewBox="0 0 440 170" role="img" aria-label="Student s1 shown as one box holding id, name and sex">
+        <rect x="20" y="20" width="400" height="120" rx="10" class="boxa"/>
+        <text x="36" y="44" class="mono acc" font-weight="600">Student s1</text>
+        <rect x="36" y="58" width="110" height="64" rx="6" class="box"/><text x="46" y="76" class="mono mut" font-size="12">.id</text><text x="91" y="106" text-anchor="middle" class="mono" font-size="16">12345</text>
+        <rect x="156" y="58" width="170" height="64" rx="6" class="box"/><text x="166" y="76" class="mono mut" font-size="12">.name</text><text x="241" y="106" text-anchor="middle" class="mono" font-size="15">"Sze Ka Ka"</text>
+        <rect x="336" y="58" width="70" height="64" rx="6" class="box"/><text x="346" y="76" class="mono mut" font-size="12">.sex</text><text x="371" y="106" text-anchor="middle" class="mono" font-size="16">'F'</text>
+        <text x="20" y="162" class="mut" font-size="12">s2 = s1 copies all three boxes; later changes to s2 don't touch s1</text>
+      </svg>
+      </div>
+      <div class="tbl"><table>
+        <tr><th>Works on structs</th><th>Doesn't (unless you write it)</th></tr>
+        <tr><td><code>p2 = p1</code>, pass, return</td><td><code>p1 + p2</code>, <code>p1 == p2</code>, <code>p1 &gt; p2</code>, <code>cout &lt;&lt; p1</code></td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Nested structs and arrays of structs</h3>
+<pre>struct Point    { double x, y; };
+struct Triangle { Point p1, p2, p3; };
+
+Triangle tr = { {1.0, 2.0}, {3.0, 4.0}, {5.0, 6.0} };
+cout &lt;&lt; tr.p1.x;                // 1
+
+StudentRec student[200];        // instead of parallel arrays
+student[0].name = "John";
+student[0].mark = 80.5;
+for (int i = 0; i &lt; 200; i++)
+    cout &lt;&lt; student[i].mark &lt;&lt; endl;</pre>
+      <div class="tbl"><table>
+        <tr><td><code>Point p = {1.0, 2.0, 3.0};</code></td><td>error: too many values</td></tr>
+        <tr><td><code>Point p = {1.0};</code></td><td>OK: y becomes 0</td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="sfunc">
+  <h2><span class="n">2</span>Structs and functions</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Read → by value, modify → by reference</h3>
+<pre>struct Circle { double x, y, r; };
+
+double circleArea(Circle c) {                 // read only
+    return 3.141592653589793 * c.r * c.r;
+}
+void enlargeCircle(Circle &amp;c, double add) {   // modify
+    c.r += add;
+}
+bool isOverlap(Circle a, Circle b) {          // yes / no
+    double dx = a.x - b.x, dy = a.y - b.y;
+    return sqrt(dx*dx + dy*dy) &lt;= a.r + b.r;
+}
+Point input_point() {                         // return a struct
+    double x, y;  cin &gt;&gt; x &gt;&gt; y;
+    Point p = {x, y};
+    return p;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Member functions</h3>
+<pre>struct Circle {
+    double x, y, r;
+    double area() { return 3.14159 * r * r; }
+    void enlarge(double add) { r += add; }
+};
+
+Circle c = {1, 1, 2};
+cout &lt;&lt; c.area();      // members used directly inside
+c.enlarge(5);</pre>
+      <h3>Pointer to a struct</h3>
+<pre>Point *q = &amp;p;
+q-&gt;x = 4;      // same as (*q).x = 4</pre>
+    </div>
+  </div>
+</section>
+
+<section id="class">
+  <h2><span class="n">3</span>Classes</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Data + functions, with access control</h3>
+<pre>class Point {
+public:                          // usable from outside
+    double getX() { return x; }
+    void setCoord(double s, double t) { x = s; y = t; }
+private:                         // members only
+    double x, y;
+};
+
+Point p1;
+p1.setCoord(1, 2);
+cout &lt;&lt; p1.getX();   // OK
+// p1.x = 5;          ✗ x is private</pre>
+    </div>
+    <div class="card">
+      <h3>struct vs class</h3>
+      <div class="tbl"><table>
+        <tr><th></th><th>struct</th><th>class</th></tr>
+        <tr><td>Default access</td><td>public</td><td>private</td></tr>
+        <tr><td>Member functions</td><td>yes</td><td>yes</td></tr>
+        <tr><td>Typical use</td><td>plain records</td><td>data hidden behind methods</td></tr>
+      </table></div>
+      <p class="muted">A constructor has the class name and no return type: <code>Account(double b) { balance = b; }</code></p>
+    </div>
+  </div>
+</section>
+
+<section id="files">
+  <h2><span class="n">4</span>File input and output</h2>
+  <p class="lede"><code>#include &lt;fstream&gt;</code>. File streams work exactly like <code>cin</code> and <code>cout</code>, with <code>&gt;&gt;</code> and <code>&lt;&lt;</code>.</p>
+  <div class="grid">
+    <div class="card span2">
+      <h3>The skeleton</h3>
+      <div class="diagram">
+      <svg viewBox="0 0 900 140" role="img" aria-label="open, check fail, loop on the read, close">
+        <defs><marker id="d1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g font-size="13">
+          <rect x="10" y="30" width="180" height="62" rx="8" class="box"/><text x="100" y="54" text-anchor="middle" font-weight="600">① open</text><text x="100" y="76" text-anchor="middle" class="mono" font-size="12">ifstream fin("in.txt");</text>
+          <rect x="240" y="30" width="180" height="62" rx="8" class="boxw"/><text x="330" y="54" text-anchor="middle" font-weight="600">② check</text><text x="330" y="76" text-anchor="middle" class="mono" font-size="12">if (fin.fail()) exit(1);</text>
+          <rect x="470" y="30" width="200" height="62" rx="8" class="boxa"/><text x="570" y="54" text-anchor="middle" font-weight="600">③ loop on the read</text><text x="570" y="76" text-anchor="middle" class="mono" font-size="12">while (fin &gt;&gt; x) { … }</text>
+          <rect x="720" y="30" width="170" height="62" rx="8" class="box"/><text x="805" y="54" text-anchor="middle" font-weight="600">④ close</text><text x="805" y="76" text-anchor="middle" class="mono" font-size="12">fin.close();</text>
+          <line x1="190" y1="61" x2="238" y2="61" class="lna" marker-end="url(#d1)"/><line x1="420" y1="61" x2="468" y2="61" class="lna" marker-end="url(#d1)"/><line x1="670" y1="61" x2="718" y2="61" class="lna" marker-end="url(#d1)"/>
+          <text x="450" y="126" text-anchor="middle" class="mut">fin &gt;&gt; x is true while a read succeeds; it turns false at end of file or on bad input</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Stream types</h3>
+      <div class="tbl"><table>
+        <tr><th>Object</th><th>Reads / writes</th><th>Header</th></tr>
+        <tr><td><code>cin</code></td><td>keyboard</td><td>iostream</td></tr>
+        <tr><td><code>cout</code></td><td>screen</td><td>iostream</td></tr>
+        <tr><td><code>ifstream</code></td><td>reads a file</td><td>fstream</td></tr>
+        <tr><td><code>ofstream</code></td><td>writes a file</td><td>fstream</td></tr>
+        <tr><td><code>istringstream</code></td><td>reads a string</td><td>sstream</td></tr>
+      </table></div>
+      <div class="tbl"><table>
+        <tr><th>Open</th><th>Effect</th></tr>
+        <tr><td><code>ofstream f("d.txt");</code></td><td>create / <b>overwrite</b></td></tr>
+        <tr><td><code>f.open("d.txt", ios::app);</code></td><td>append to the end</td></tr>
+        <tr><td><code>fin.open(name.c_str());</code></td><td>file name held in a string</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Write, then read back</h3>
+<pre>ofstream fout("data1.txt");
+if (fout.fail()) { cout &lt;&lt; "Error!"; return 1; }
+fout &lt;&lt; "Peter " &lt;&lt; 30 &lt;&lt; " " &lt;&lt; 130.5 &lt;&lt; endl;
+fout.close();
+
+ifstream fin("data1.txt");
+string name; int age; double weight;
+fin &gt;&gt; name &gt;&gt; age &gt;&gt; weight;   // split on whitespace
+fin.close();</pre>
+    </div>
+    <div class="card">
+      <h3>Unknown length: three loops</h3>
+<pre>double x, sum = 0;
+while (fin &gt;&gt; x) sum += x;           // token by token
+
+string line;
+while (getline(fin, line))           // line by line
+    cout &lt;&lt; line &lt;&lt; endl;
+
+int count = 0; string w[100];
+while (getline(fin, line)) {         // into an array
+    w[count] = line;  count++;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="sstream">
+  <h2><span class="n">5</span>istringstream: split a line</h2>
+  <div class="grid">
+    <div class="card">
+<pre>#include &lt;sstream&gt;
+string line = "Peter 30 130.5";
+istringstream iss(line);        // a stream over the string
+string name; int age; double w;
+iss &gt;&gt; name &gt;&gt; age &gt;&gt; w;         // like cin, from the string
+
+string word;
+while (iss &gt;&gt; word) { … }       // every word on the line</pre>
+      <p class="muted">Python equivalent: <code>name, age, w = line.split()</code>. Common pattern: <code>getline</code> a whole line from the file, then pull its fields out with a fresh istringstream.</p>
+    </div>
+    <div class="trap">
+      <h3>File I/O traps</h3>
+      <ul>
+        <li><code>while (!fin.eof())</code> usually handles the last item twice. Loop on the read itself.</li>
+        <li>Opening an existing file with plain <code>ofstream</code> wipes it. Use <code>ios::app</code> to keep it.</li>
+        <li>Always check <code>fail()</code> straight after opening.</li>
+        <li><code>exit(1)</code> needs <code>&lt;cstdlib&gt;</code>.</li>
+        <li>Make a new istringstream per line; a used-up one reads nothing.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="format">
+  <h2><span class="n">6</span>Output formatting (&lt;iomanip&gt;)</h2>
+  <p class="lede">In the outputs below, <span class="vis"><i>·</i></span> marks a space.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="tbl"><table>
+        <tr><th>Code</th><th>Output</th><th>Rule</th></tr>
+        <tr><td><code>cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; 3.14159;</code></td><td><span class="vis">3.14</span></td><td>with fixed: n digits after the point</td></tr>
+        <tr><td><code>cout &lt;&lt; fixed &lt;&lt; setprecision(2) &lt;&lt; 2.5;</code></td><td><span class="vis">2.50</span></td><td>pads with zeros</td></tr>
+        <tr><td><code>cout &lt;&lt; setprecision(3) &lt;&lt; 3.14159;</code></td><td><span class="vis">3.14</span></td><td>without fixed: n significant digits</td></tr>
+        <tr><td><code>cout &lt;&lt; setw(6) &lt;&lt; 42;</code></td><td><span class="vis"><i>····</i>42</span></td><td>width 6, right-aligned by default</td></tr>
+        <tr><td><code>cout &lt;&lt; left &lt;&lt; setw(6) &lt;&lt; 42 &lt;&lt; "|";</code></td><td><span class="vis">42<i>····</i>|</span></td><td>left-align</td></tr>
+        <tr><td><code>cout &lt;&lt; setfill('0') &lt;&lt; setw(5) &lt;&lt; 42;</code></td><td><span class="vis">00042</span></td><td>pad character</td></tr>
+        <tr><td><code>cout &lt;&lt; setw(3) &lt;&lt; 12345;</code></td><td><span class="vis">12345</span></td><td>never truncates</td></tr>
+        <tr><td><code>cout &lt;&lt; scientific &lt;&lt; 1234.5;</code></td><td><span class="vis">1.234500e+03</span></td><td>exponent form</td></tr>
+        <tr><td><code>cout &lt;&lt; setw(10) &lt;&lt; "Name" &lt;&lt; setw(8) &lt;&lt; "Mark";</code></td><td><span class="vis"><i>······</i>Name<i>····</i>Mark</span></td><td>table headings</td></tr>
+      </table></div>
+      <p class="muted"><b>setw</b> applies to the next item only. <b>fixed, setprecision, setfill, left/right</b> stay in force until changed.</p>
+    </div>
+  </div>
+</section>
+
+<section id="rec">
+  <h2><span class="n">7</span>Recursion</h2>
+  <p class="lede">A recursive function calls itself on a smaller version of the problem. It needs a <b>base case</b> that stops, and a <b>recursive case</b> that moves toward it.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>factorial(3): down, then back up</h3>
+      <div class="diagram sm">
+      <svg viewBox="0 0 460 250" role="img" aria-label="factorial(3) calls factorial(2), (1), (0); returns 1, 1, 2, 6 back up">
+        <defs><marker id="d2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker>
+        <marker id="d3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g class="mono" font-size="13">
+          <rect x="20" y="10" width="230" height="36" rx="6" class="box"/><text x="32" y="33">factorial(3) = 3 * f(2)</text>
+          <rect x="50" y="68" width="230" height="36" rx="6" class="box"/><text x="62" y="91">factorial(2) = 2 * f(1)</text>
+          <rect x="80" y="126" width="230" height="36" rx="6" class="box"/><text x="92" y="149">factorial(1) = 1 * f(0)</text>
+          <rect x="110" y="184" width="230" height="36" rx="6" class="boxa"/><text x="122" y="207">factorial(0) = 1   base</text>
+        </g>
+        <g>
+          <line x1="40" y1="46" x2="66" y2="66" class="ln" marker-end="url(#d2)"/><line x1="70" y1="104" x2="96" y2="124" class="ln" marker-end="url(#d2)"/><line x1="100" y1="162" x2="126" y2="182" class="ln" marker-end="url(#d2)"/>
+          <path d="M340 202 C 380 202, 380 148, 316 146" class="lna" marker-end="url(#d3)"/><text x="384" y="180" class="mono acc" font-size="13">1</text>
+          <path d="M310 144 C 350 144, 350 90, 286 88" class="lna" marker-end="url(#d3)"/><text x="354" y="122" class="mono acc" font-size="13">1</text>
+          <path d="M280 86 C 320 86, 320 32, 256 30" class="lna" marker-end="url(#d3)"/><text x="324" y="64" class="mono acc" font-size="13">2</text>
+          <text x="262" y="20" class="mono acc" font-size="14" font-weight="600">→ 6</text>
+          <text x="20" y="244" class="mut" font-size="12">grey arrows: calls going down · green: return values coming up</text>
+        </g>
+      </svg>
+      </div>
+<pre>int factorial(int num) {
+    if (num == 0) return 1;                  // base
+    return num * factorial(num - 1);         // smaller problem
+}</pre>
+    </div>
+    <div class="card">
+      <h3>fib(4): the call tree (9 calls)</h3>
+      <div class="diagram sm">
+      <svg viewBox="0 0 460 250" role="img" aria-label="fib(4) call tree, fib(2) computed twice">
+        <g class="ln">
+          <line x1="230" y1="34" x2="130" y2="84"/><line x1="230" y1="34" x2="340" y2="84"/>
+          <line x1="130" y1="104" x2="70" y2="154"/><line x1="130" y1="104" x2="190" y2="154"/>
+          <line x1="340" y1="104" x2="300" y2="154"/><line x1="340" y1="104" x2="390" y2="154"/>
+          <line x1="70" y1="174" x2="35" y2="214"/><line x1="70" y1="174" x2="105" y2="214"/>
+        </g>
+        <g class="mono" font-size="13" text-anchor="middle">
+          <rect x="185" y="14" width="90" height="26" rx="13" class="boxa"/><text x="230" y="32">fib(4)=3</text>
+          <rect x="85" y="84" width="90" height="26" rx="13" class="box"/><text x="130" y="102">fib(3)=2</text>
+          <rect x="295" y="84" width="90" height="26" rx="13" class="boxw"/><text x="340" y="102">fib(2)=1</text>
+          <rect x="25" y="154" width="90" height="26" rx="13" class="boxw"/><text x="70" y="172">fib(2)=1</text>
+          <rect x="150" y="154" width="80" height="26" rx="13" class="box"/><text x="190" y="172">fib(1)=1</text>
+          <rect x="260" y="154" width="80" height="26" rx="13" class="box"/><text x="300" y="172">fib(1)=1</text>
+          <rect x="350" y="154" width="80" height="26" rx="13" class="box"/><text x="390" y="172">fib(0)=0</text>
+          <rect x="0" y="214" width="70" height="26" rx="13" class="box"/><text x="35" y="232">fib(1)</text>
+          <rect x="72" y="214" width="70" height="26" rx="13" class="box"/><text x="107" y="232">fib(0)</text>
+        </g>
+        <text x="300" y="232" class="warnf" font-size="12">fib(2) is worked out twice</text>
+      </svg>
+      </div>
+<pre>int fib(int n) {
+    if (n &lt; 2) return n;
+    return fib(n - 1) + fib(n - 2);
+}</pre>
+    </div>
+    <div class="card">
+      <h3>More from the notes</h3>
+<pre>int gcd(int x, int y) {
+    if (y == 0) return x;
+    return gcd(y, x % y);
+}
+// gcd(18, 24) → gcd(24, 18) → gcd(18, 6) → gcd(6, 0) → 6
+
+bool is_palindrome(string s) {
+    if (s.length() &lt; 2) return true;
+    return s[0] == s[s.length() - 1]
+        &amp;&amp; is_palindrome(s.substr(1, s.length() - 2));
+}</pre>
+      <h3>Tracing tips</h3>
+      <ul class="steps" style="list-style:disc">
+        <li>Write each call on its own line, indented one step deeper.</li>
+        <li>Fill in return values from the bottom up.</li>
+        <li>Code <b>after</b> the recursive call runs on the way back, in reverse order.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Recursion vs iteration</h3>
+      <div class="tbl"><table>
+        <tr><th>Use recursion when</th><th>Use a loop when</th></tr>
+        <tr><td class="wrap-ok">the problem is naturally recursive (trees, divide and conquer)</td><td class="wrap-ok">performance matters</td></tr>
+        <tr><td class="wrap-ok">the recursive version is clearer</td><td class="wrap-ok">recursion depth could be large</td></tr>
+        <tr><td class="wrap-ok">input size is controlled</td><td class="wrap-ok">a loop is simpler</td></tr>
+      </table></div>
+      <p class="muted">Every call uses stack memory: too many → stack overflow; no base case → infinite recursion and a crash. Anything recursive can also be written with a loop.</p>
+    </div>
+    <div class="trap">
+      <h3>Module 7 traps</h3>
+      <ul>
+        <li>Missing <code>;</code> after a struct's closing brace.</li>
+        <li><code>p.x</code> for a variable, <code>q-&gt;x</code> for a pointer.</li>
+        <li>Accessing a private member from outside the class does not compile.</li>
+        <li>No base case, or a step that doesn't shrink the problem → infinite recursion.</li>
+        <li><code>return factorial(n-1);</code> without <code>n *</code>, or a missing <code>return</code>, loses the result.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">8</span>Predict the output</h2>
+  <div class="qa">
+    <details><summary>struct P { int x, y; };
+P a = {1, 2}; P b = a; b.x = 9;
+cout &lt;&lt; a.x &lt;&lt; b.x;</summary><p>19</p></details>
+    <details><summary>void f(P p) { p.x = 0; }
+P a = {5, 5}; f(a); cout &lt;&lt; a.x;</summary><p>5 <span>struct passed by value is copied</span></p></details>
+    <details><summary>cout &lt;&lt; setw(4) &lt;&lt; 7 &lt;&lt; 8;</summary><p>···78 <span>setw only applies to the 7</span></p></details>
+    <details><summary>void r(int n) { if (n == 0) return;
+  cout &lt;&lt; n; r(n - 1); cout &lt;&lt; n; }
+r(3);</summary><p>321123 <span>before the call going down, after the call coming back</span></p></details>
+    <details><summary>int s(int n) { return n == 0 ? 0 : n % 10 + s(n / 10); }
+cout &lt;&lt; s(4321);</summary><p>10 <span>digit sum</span></p></details>
+    <details><summary>cout &lt;&lt; fixed &lt;&lt; setprecision(1) &lt;&lt; 2.0 / 3;</summary><p>0.7</p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from Module 7 Reference Notes and the "Structs, File I/O, and Recursion" slides.</p></footer>
+<script src="sheet.js"></script>
+</body>
+</html>

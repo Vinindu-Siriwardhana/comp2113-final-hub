@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Modules 1–2</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Modules 1 and 2: Linux commands, permissions, redirection, regex, Bash scripting, Git and VPL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>
+.perm{display:flex;flex-wrap:wrap;gap:4px}
+.perm button{font-family:var(--f-mono);font-size:18px;font-weight:600;width:36px;height:44px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.perm button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.perm .gap{width:8px}
+.perm-labels{display:grid;grid-template-columns:36px 8px repeat(3,1fr);gap:4px;font-family:var(--f-mono);font-size:11px;color:var(--muted);max-width:400px}
+.rx-presets{display:flex;flex-wrap:wrap;gap:6px}
+.rx-presets button{font-family:var(--f-mono);font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.rx-presets button:hover{border-color:var(--accent);color:var(--accent)}
+.rx-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rx-row label{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.rx-row input{flex:1 1 220px}
+.rx-cols{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.rx-out{font-family:var(--f-mono);font-size:14px;background:var(--code);border-radius:8px;padding:8px 10px;min-height:120px}
+.rx-out div{padding:1px 4px;border-radius:4px}
+.rx-out .hit{color:var(--ok);font-weight:600}
+.rx-out .miss{color:var(--muted);text-decoration:line-through;opacity:.6}
+.rx-out .err{color:var(--bad)}
+.rx-note{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Modules 1 &amp; 2 at a glance</h1>
+  <p>Every command, flag and rule from the Linux Environment, Shell Script and Version Control notes, squeezed into tables and diagrams. Green band = Module 1, blue band = Module 2.</p>
+  <div class="chips"><span class="chip">M1 Linux Environment · 43 pp</span><span class="chip">M2 Shell Script · 19 pp</span><span class="chip">M2 Version Control · 15 pp</span><span class="chip">VPL guide</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#nav-files">Files &amp; dirs</a><a href="#perms">Permissions</a><a href="#text">Text tools</a><a href="#io">I/O &amp; pipes</a><a href="#search">find &amp; grep</a><a href="#vi">vi</a>
+  <a href="#basics">Script basics</a><a href="#vars">Variables</a><a href="#flow">if / for</a><a href="#git">Git</a><a href="#branch">Branch &amp; merge</a><a href="#remote">Remotes</a><a href="#vpl">VPL</a>
+</div></nav>
+<!-- ================= MODULE 1 ================= -->
+<div class="band a1" id="linux">
+<div class="wrap">
+  <div class="band-head"><span class="tag">MODULE 1</span><h2>Linux Environment</h2><span class="muted">Linux basics, Bash shell, file management, permissions, text tools, redirection, regex</span></div>
+
+  <section id="intro">
+    <div class="grid">
+      <div class="card">
+        <h3>What &amp; why</h3>
+        <table>
+          <tr><td>Linux</td><td>An OS: the interface between you and the hardware. Course uses <b>Ubuntu</b>.</td></tr>
+          <tr><td>Why learn it</td><td>Open-source (customisable, inspectable), loads of dev tools (C++, debuggers, profilers), free (Android is Linux-based).</td></tr>
+          <tr><td>Shell</td><td>Text program that runs your commands. Kinds: Korn, Bourne, C, <b>Bash</b> (this course).</td></tr>
+          <tr><td>Not unified</td><td>Korn prints with <code>print</code>, Bash with <code>echo</code>.</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Getting in</h3>
+        <pre>ssh &lt;CS username&gt;@academy11.cs.hku.hk</pre>
+        <p class="muted">Off campus, connect to HKUVPN first. Transfer files via vi, <code>cat &gt; file</code>, or SFTP/FileZilla.</p>
+        <pre>$ man ls      # manual page; arrows scroll, q quits</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="nav-files">
+    <h2><span class="n">1</span>Paths, directories &amp; files</h2>
+    <p class="lede">Everything is a file inside a tree that starts at root <code>/</code>. A <b>full path</b> starts with <code>/</code>; a <b>relative path</b> doesn't and is read from where you are (<code>pwd</code>).</p>
+    <div class="grid">
+      <div class="card">
+        <h3>The tree from the notes</h3>
+<pre>/                       <span class="muted">← root</span>
+└── home/
+    ├── file3           <span class="muted">full: /home/file3</span>
+    └── kit/            <span class="muted">~ for user kit</span>
+        └── Desktop/
+            └── file4   <span class="muted">full: /home/kit/Desktop/file4</span>
+                        <span class="muted">from /home/kit: Desktop/file4</span></pre>
+        <table>
+          <tr><td><code>~</code></td><td>your home dir</td></tr>
+          <tr><td><code>~user</code></td><td>another user's home</td></tr>
+          <tr><td><code>..</code> / <code>.</code></td><td>parent / current dir</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Directories</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>pwd</code></td><td>print working directory</td></tr>
+          <tr><td><code>ls</code></td><td>list contents</td></tr>
+          <tr><td><code>ls -l</code></td><td>long format (perms, owner, size, date)</td></tr>
+          <tr><td><code>ls -a</code></td><td>include hidden (names starting with <code>.</code>)</td></tr>
+          <tr><td><code>ls -la</code></td><td>both of the above</td></tr>
+          <tr><td><code>ls -t</code></td><td>sort by time, newest first</td></tr>
+          <tr><td><code>cd dir</code></td><td>change dir (<code>cd ~</code>, <code>cd ..</code>)</td></tr>
+          <tr><td><code>mkdir a b</code></td><td>make one or more dirs; <code>mkdir "lab 1"</code> for spaces</td></tr>
+          <tr><td><code>rmdir dir</code></td><td>remove <b>empty</b> dir only</td></tr>
+          <tr><td><code>rm -rf dir</code></td><td>remove dir + everything inside (<code>-r</code> recursive, <code>-f</code> no prompt)</td></tr>
+          <tr><td><code>mv dir dir2</code></td><td>rename if dir2 doesn't exist, else move dir into dir2</td></tr>
+          <tr><td><code>cp -r d1 d2</code></td><td>copy dir incl. subdirs</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Files</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>touch f</code></td><td>create empty file</td></tr>
+          <tr><td><code>cat f</code></td><td>display file</td></tr>
+          <tr><td><code>cp f1 f2</code></td><td>copy f1 to f2</td></tr>
+          <tr><td><code>mv f dir</code></td><td>move file into dir</td></tr>
+          <tr><td><code>mv f1 f2</code></td><td>same type → rename</td></tr>
+          <tr><td><code>rm f</code></td><td>delete file</td></tr>
+          <tr><td><code>mv myfile* lab</code></td><td>wildcard: <code>*</code> any string (or nothing)</td></tr>
+          <tr><td><code>ls ?</code></td><td>wildcard: <code>?</code> exactly one char</td></tr>
+        </table></div>
+        <p class="muted">Flags (<code>-l</code>) change behaviour; arguments (<code>dir</code>) name the target.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="perms">
+    <h2><span class="n">2</span>File permissions</h2>
+    <p class="lede">Three owner classes (<b>u</b>ser, <b>g</b>roup, <b>o</b>ther) × three rights (<b>r</b>ead, <b>w</b>rite, e<b>x</b>ecute). On a directory, r = list it, w = add/remove/rename inside it.</p>
+    <div class="grid">
+      <div class="card span2">
+        <h3>Reading a line of <code>ls -l</code></h3>
+        <div class="diagram">
+        <svg viewBox="0 0 900 190" role="img" aria-label="Breakdown of an ls -l line into permissions, links, owner, group, size, date and name">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+          <rect x="20" y="20" width="230" height="44" rx="6" class="boxa"/>
+          <text x="135" y="49" text-anchor="middle" class="mono" font-size="20" font-weight="600">-rw-------</text>
+          <rect x="262" y="20" width="36" height="44" rx="6" class="box"/><text x="280" y="49" text-anchor="middle" class="mono" font-size="18">1</text>
+          <rect x="310" y="20" width="96" height="44" rx="6" class="box"/><text x="358" y="49" text-anchor="middle" class="mono" font-size="18">cklai</text>
+          <rect x="418" y="20" width="60" height="44" rx="6" class="box"/><text x="448" y="49" text-anchor="middle" class="mono" font-size="18">ra</text>
+          <rect x="490" y="20" width="60" height="44" rx="6" class="box"/><text x="520" y="49" text-anchor="middle" class="mono" font-size="18">50</text>
+          <rect x="562" y="20" width="170" height="44" rx="6" class="box"/><text x="647" y="49" text-anchor="middle" class="mono" font-size="18">Jul 30 17:07</text>
+          <rect x="744" y="20" width="136" height="44" rx="6" class="box"/><text x="812" y="49" text-anchor="middle" class="mono" font-size="18">file1.txt</text>
+          <g font-size="13">
+            <line x1="135" y1="64" x2="135" y2="96" class="ln" marker-end="url(#ah)"/><text x="135" y="116" text-anchor="middle" font-weight="600" class="acc">permission indicator</text><text x="135" y="134" text-anchor="middle" class="mut">type + u g o rights</text>
+            <line x1="280" y1="64" x2="280" y2="140" class="ln" marker-end="url(#ah)"/><text x="280" y="160" text-anchor="middle">hard links</text>
+            <line x1="358" y1="64" x2="358" y2="96" class="ln" marker-end="url(#ah)"/><text x="358" y="116" text-anchor="middle">owner</text>
+            <line x1="448" y1="64" x2="448" y2="140" class="ln" marker-end="url(#ah)"/><text x="448" y="160" text-anchor="middle">group</text>
+            <line x1="520" y1="64" x2="520" y2="96" class="ln" marker-end="url(#ah)"/><text x="520" y="116" text-anchor="middle">size (bytes)</text>
+            <line x1="647" y1="64" x2="647" y2="140" class="ln" marker-end="url(#ah)"/><text x="647" y="160" text-anchor="middle">last modified</text>
+            <line x1="812" y1="64" x2="812" y2="96" class="ln" marker-end="url(#ah)"/><text x="812" y="116" text-anchor="middle">name</text>
+          </g>
+          <text x="20" y="184" font-size="12" class="mut">The "total 10" line above the listing = space used by the files, in KB. A trailing * on a name (e.g. file*) means executable.</text>
+        </svg>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Try it: click the bits</h3>
+        <div class="perm" id="perm" aria-label="Permission toggles"></div>
+        <div class="perm-labels"><span>type</span><span></span><span>user</span><span>group</span><span>other</span></div>
+        <div class="out" id="permOut" aria-live="polite"></div>
+        <p class="muted" id="permEn"></p>
+      </div>
+
+      <div class="card">
+        <h3><code>chmod [who][op][perms] file</code></h3>
+        <div class="tbl"><table>
+          <tr><th>who</th><th>op</th><th>perms</th></tr>
+          <tr><td><code>u</code> user/owner</td><td><code>+</code> add</td><td><code>r</code> read</td></tr>
+          <tr><td><code>g</code> group</td><td><code>-</code> remove</td><td><code>w</code> write</td></tr>
+          <tr><td><code>o</code> other</td><td><code>=</code> set exactly</td><td><code>x</code> execute</td></tr>
+          <tr><td><code>a</code> all three</td><td></td><td></td></tr>
+        </table></div>
+<pre>chmod o+w file     # others may write
+chmod o+rx file    # several at once
+chmod go-rw file   # remove from group+other
+chmod u+x hello.sh # needed before ./hello.sh</pre>
+        <p class="muted">Remove your own x and <code>./prog</code> gives "Permission denied".</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="text">
+    <h2><span class="n">3</span>Text-processing tools</h2>
+    <p class="lede">None of these change the original file; they print a result. Field numbers start at <b>1</b>, not 0.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Quick reference</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>grep 'abc' f</code></td><td>lines containing abc (case-sensitive)</td></tr>
+          <tr><td><code>wc f</code></td><td>lines, words, bytes → <code>6 18 71 f</code></td></tr>
+          <tr><td><code>wc -l</code> / <code>-w</code></td><td>lines only / words only</td></tr>
+          <tr><td><code>sort f</code></td><td>alphabetical sort ("10" before "2")</td></tr>
+          <tr><td><code>cut -d, -f2 f</code></td><td>column 2, split on commas</td></tr>
+          <tr><td><code>uniq f</code></td><td>drop <b>adjacent</b> duplicate lines</td></tr>
+          <tr><td><code>diff f1 f2</code></td><td>how to turn f1 into f2</td></tr>
+          <tr><td><code>spell f</code></td><td>list misspelled words</td></tr>
+          <tr><td><code>su</code></td><td>become superuser</td></tr>
+          <tr><td><code>apt-get install p</code></td><td>install program (or <code>yum install</code>)</td></tr>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <h3>sort vs cut flags</h3>
+        <div class="tbl"><table>
+          <tr><th>Need</th><th>sort</th><th>cut</th></tr>
+          <tr><td>delimiter</td><td><code>-t,</code></td><td><code>-d,</code></td></tr>
+          <tr><td>which field</td><td><code>-k3</code></td><td><code>-f3</code></td></tr>
+          <tr><td>several fields</td><td>—</td><td><code>-f1,3</code> or <code>-f4-8</code></td></tr>
+          <tr><td>numeric</td><td><code>-n</code></td><td>—</td></tr>
+          <tr><td>reverse</td><td><code>-r</code></td><td>—</td></tr>
+          <tr><td>default delim</td><td>space</td><td>must give <code>-d' '</code></td></tr>
+        </table></div>
+<pre>sort -n -r data.txt
+sort -t, -k3 -n data_comma.txt
+cut -d ' ' -f 1,3 data.txt</pre>
+      </div>
+
+      <div class="card">
+        <h3>Decoding <code>diff</code> output</h3>
+        <div class="tbl"><table>
+          <tr><th>Form</th><th>Meaning</th></tr>
+          <tr><td><code>LaR</code></td><td>after line L of file 1, <b>add</b> line(s) R of file 2</td></tr>
+          <tr><td><code>LcR</code></td><td><b>change</b> line(s) L of file 1 into R of file 2</td></tr>
+          <tr><td><code>LdR</code></td><td><b>delete</b> line(s) L; files then sync at line R of file 2</td></tr>
+          <tr><td><code>&lt; x</code></td><td>line from file 1 (going out)</td></tr>
+          <tr><td><code>&gt; x</code></td><td>line from file 2 (coming in)</td></tr>
+          <tr><td><code>---</code></td><td>only in <code>c</code>: separates out from in</td></tr>
+        </table></div>
+<pre>fileA: aaa bbb ccc   fileB: eee aaa ddd
+$ diff fileA fileB     $ diff fileB fileA
+0a1                    1d0
+&gt; eee                  &lt; eee
+2,3c3                  3c2,3
+&lt; bbb                  &lt; ddd
+&lt; ccc                  ---
+---                    &gt; bbb
+&gt; ddd                  &gt; ccc</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="io">
+    <h2><span class="n">4</span>Standard I/O, redirection &amp; pipes</h2>
+    <p class="lede">Every command gets three numbered streams (file descriptors). Redirection points them at files; a pipe <code>|</code> feeds one command's stdout straight into the next one's stdin, with no temp file.</p>
+    <div class="grid">
+      <div class="card span2">
+        <h3>The three streams</h3>
+        <div class="diagram">
+        <svg viewBox="0 0 860 210" role="img" aria-label="stdin 0 flows into a command; stdout 1 and stderr 2 flow out, with the operators that redirect each">
+          <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+          <rect x="20" y="78" width="170" height="54" rx="8" class="box"/>
+          <text x="105" y="102" text-anchor="middle" font-weight="600">keyboard / file</text>
+          <text x="105" y="121" text-anchor="middle" class="mono mut" font-size="12">&lt; input.txt</text>
+          <line x1="190" y1="105" x2="318" y2="105" class="lna" marker-end="url(#ah2)"/>
+          <text x="254" y="96" text-anchor="middle" class="mono acc" font-size="13">0 stdin</text>
+          <rect x="320" y="70" width="200" height="70" rx="8" class="boxa"/>
+          <text x="420" y="102" text-anchor="middle" font-weight="600" font-size="16">command</text>
+          <text x="420" y="122" text-anchor="middle" class="mono mut" font-size="12">e.g. ./add</text>
+          <path d="M520 90 C 570 90, 570 50, 618 50" class="lna" marker-end="url(#ah2)"/>
+          <text x="560" y="58" text-anchor="middle" class="mono acc" font-size="13">1 stdout</text>
+          <path d="M520 120 C 570 120, 570 160, 618 160" class="lna" marker-end="url(#ah2)"/>
+          <text x="560" y="174" text-anchor="middle" class="mono acc" font-size="13">2 stderr</text>
+          <rect x="620" y="18" width="225" height="66" rx="8" class="box"/>
+          <text x="634" y="40" class="mono" font-size="12.5">&gt; f    overwrite</text>
+          <text x="634" y="58" class="mono" font-size="12.5">&gt;&gt; f   append</text>
+          <text x="634" y="76" class="mono" font-size="12.5">| cmd  pipe onward</text>
+          <rect x="620" y="128" width="225" height="66" rx="8" class="box"/>
+          <text x="634" y="150" class="mono" font-size="12.5">2&gt; f   errors to f</text>
+          <text x="634" y="168" class="mono" font-size="12.5">2&gt;&gt; f  append errors</text>
+          <text x="634" y="186" class="mono" font-size="12.5">2&gt;&amp;1  join stdout</text>
+        </svg>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Operator table</h3>
+        <div class="tbl"><table>
+          <tr><th>Syntax</th><th>Meaning</th></tr>
+          <tr><td><code>cmd &gt; f</code> = <code>1&gt;</code></td><td>stdout to f (overwrite)</td></tr>
+          <tr><td><code>cmd &gt;&gt; f</code></td><td>append stdout</td></tr>
+          <tr><td><code>cmd &gt;| f</code></td><td>force overwrite if blocked</td></tr>
+          <tr><td><code>cmd 2&gt; f</code></td><td>stderr to f</td></tr>
+          <tr><td><code>cmd 2&gt;&gt; f</code></td><td>append stderr</td></tr>
+          <tr><td><code>cmd &lt; f</code></td><td>read input from f</td></tr>
+          <tr><td><code>cmd &gt; f 2&gt;&amp;1</code></td><td>both streams into f</td></tr>
+          <tr><td><code>cmd &lt; A &gt; B 2&gt; C</code></td><td>in from A, out to B, errors to C</td></tr>
+          <tr><td><code>a | b</code></td><td>a's stdout → b's stdin</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Compile, run, redirect</h3>
+<pre>g++ add.cpp -o add     # name exe 'add' not a.out
+./add                  # type: 3 4 → 7
+./add &lt; input.txt
+./add &lt; input.txt &gt; output.txt
+cut -d' ' -f4-8 mark.txt | ./mark &gt; result.txt
+ls -l | grep "Jan 26"
+ls -l | grep -E '^...x..x..x'   # x for u, g and o</pre>
+      </div>
+      <div class="card span2">
+        <h3>Pipe walk-through: <code>sort -k3 -n data.txt | cut -d' ' -f2,3 &gt; result.txt</code></h3>
+        <div class="pipe">
+          <div class="stage"><span class="eyebrow">data.txt</span><pre>5 Apple 3.5
+4 Chicken 50
+1 Coke 5.5
+10 Jelly 5
+3 Chocolate 15
+2 Milk 8</pre></div>
+          <div class="op">sort -k3 -n<br>→ |</div>
+          <div class="stage"><span class="eyebrow">sorted by price</span><pre>5 Apple 3.5
+10 Jelly 5
+1 Coke 5.5
+2 Milk 8
+3 Chocolate 15
+4 Chicken 50</pre></div>
+          <div class="op">cut -f2,3<br>→ &gt;</div>
+          <div class="stage"><span class="eyebrow">result.txt</span><pre>Apple 3.5
+Jelly 5
+Coke 5.5
+Milk 8
+Chocolate 15
+Chicken 50</pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="search">
+    <h2><span class="n">5</span>Searching: find &amp; grep</h2>
+    <p class="lede"><code>find</code> searches for <b>files</b>; <code>grep</code> searches <b>inside</b> files and prints matching lines. Use <code>grep -E</code> whenever the pattern uses regex symbols.</p>
+    <div class="grid">
+      <div class="card">
+        <h3><code>find [path] -name "pat" -type f|d</code></h3>
+<pre>find . -name "hello.txt" -type f   # ./hello.txt
+find . -name "hello.*"   -type f   # .cpp and .txt
+find . -name "hello"     -type d   # directories only</pre>
+        <p class="muted"><code>.</code> = start here and drill into every subdirectory. <code>-type</code> is optional.</p>
+      </div>
+      <div class="card">
+        <h3>Regex symbols (grep -E)</h3>
+        <div class="tbl"><table>
+          <tr><th>Symbol</th><th>Matches</th></tr>
+          <tr><td><code>.</code></td><td>any single character</td></tr>
+          <tr><td><code>^</code> / <code>$</code></td><td>start / end of line</td></tr>
+          <tr><td><code>?</code></td><td>previous char 0 or 1 times</td></tr>
+          <tr><td><code>+</code></td><td>previous char 1 or more</td></tr>
+          <tr><td><code>*</code></td><td>previous char 0 or more</td></tr>
+          <tr><td><code>[abc]</code> <code>[1-5]</code></td><td>any one char in the set / range</td></tr>
+          <tr><td><code>\.</code></td><td>escape: a literal dot</td></tr>
+          <tr><td><code>{n}</code></td><td>exactly n times</td></tr>
+          <tr><td><code>{n,}</code></td><td>at least n</td></tr>
+          <tr><td><code>{n,m}</code></td><td>between n and m</td></tr>
+          <tr><td><code>(ab)</code></td><td>group, so <code>(ab){3}</code> = ababab</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Patterns worth memorising</h3>
+        <div class="tbl"><table>
+          <tr><th>Pattern</th><th>Means</th></tr>
+          <tr><td><code>^apple$</code></td><td>line is exactly apple</td></tr>
+          <tr><td><code>^.....$</code></td><td>line of exactly 5 chars</td></tr>
+          <tr><td><code>^.{n,m}$</code></td><td>line length n to m</td></tr>
+          <tr><td><code>a.*ge</code></td><td>a, anything, then ge</td></tr>
+          <tr><td><code>[A-Za-z]</code></td><td>any letter</td></tr>
+          <tr><td><code>abc.*abc</code></td><td>abc … abc</td></tr>
+          <tr><td><code>(bye)+</code></td><td>bye, byebye, …</td></tr>
+          <tr><td><code>[0-9]{2}-[0-9]{2}-[0-9]{4}</code></td><td>dd-mm-yyyy</td></tr>
+          <tr><td><code>colou?r</code></td><td>color or colour</td></tr>
+        </table></div>
+      </div>
+
+      <div class="card span2">
+        <h3>grep -E tester</h3>
+        <p class="rx-note">Pick an example from the notes or type your own. Each line is tested like grep does: a line matches if the pattern appears anywhere in it.</p>
+        <div class="rx-presets" id="rxPresets"></div>
+        <div class="rx-row"><label for="rxPat">grep -E '</label><input type="text" id="rxPat" spellcheck="false" autocomplete="off"><label for="rxPat">' file</label></div>
+        <div class="rx-cols">
+          <div><span class="eyebrow">file contents (editable)</span><textarea id="rxText" spellcheck="false"></textarea></div>
+          <div><span class="eyebrow">result</span><div class="rx-out" id="rxOut" aria-live="polite"></div></div>
+        </div>
+        <p class="rx-note" id="rxWhy"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="vi">
+    <h2><span class="n">6</span>vi editor &amp; making files</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Two modes</h3>
+        <div class="tbl"><table>
+          <tr><th>Key</th><th>Effect</th></tr>
+          <tr><td><code>vi file</code></td><td>open (creates if missing); starts in <b>command</b> mode</td></tr>
+          <tr><td><code>i</code></td><td>enter <b>insert</b> mode ("INSERT" bottom-left)</td></tr>
+          <tr><td><code>Esc</code></td><td>back to command mode</td></tr>
+          <tr><td><code>:w</code></td><td>save</td></tr>
+          <tr><td><code>:w name</code></td><td>save as new file</td></tr>
+          <tr><td><code>:wq</code></td><td>save and quit</td></tr>
+          <tr><td><code>:q</code></td><td>quit</td></tr>
+          <tr><td><code>:q!</code></td><td>quit without saving</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>cat as a quick editor</h3>
+<pre>$ cat &gt; hello.txt
+Hi! I am using cat to make a file.
+^D        # Ctrl+D saves
+          # Ctrl+C aborts</pre>
+      </div>
+      <div class="trap">
+        <h3>Module 1 traps</h3>
+        <ul>
+          <li><code>uniq</code> only removes <b>adjacent</b> duplicates. Use <code>sort f | uniq</code> for all.</li>
+          <li><code>sort</code> is alphabetical by default: "10" sorts before "2". Add <code>-n</code>.</li>
+          <li><code>sort</code> uses <code>-t</code> for delimiter, <code>cut</code> uses <code>-d</code>.</li>
+          <li><code>rmdir</code> fails on a non-empty dir; use <code>rm -rf</code>.</li>
+          <li>grep is case-sensitive: <code>'hell'</code> misses "Hello".</li>
+          <li><code>[a-z,A-Z]</code> also matches a comma. Write <code>[a-zA-Z]</code>.</li>
+          <li><code>co*</code> = c then any o's (matches "cherries"); <code>(co)+</code> repeats "co".</li>
+          <li><code>2&gt;&amp;1</code> goes <b>after</b> the stdout redirect: <code>cmd &gt; f 2&gt;&amp;1</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+
+<!-- ================= MODULE 2 ================= -->
+<div class="band a2" id="script">
+<div class="wrap">
+  <div class="band-head"><span class="tag">MODULE 2</span><h2>Shell Script &amp; Version Control</h2><span class="muted">Bash scripts (variables, quoting, if, for) · Git workflow, branches, remotes · VPL</span></div>
+
+  <section id="basics">
+    <h2><span class="n">7</span>Script basics</h2>
+    <p class="lede">A shell script (<code>.sh</code>) is a text file of commands. Bash is <b>interpreted</b>: no compile step, quick to edit, slower to run. Write it on Linux or save with <b>LF</b> line endings; Windows CRLF breaks it.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>hello.sh, start to finish</h3>
+<pre>#!/bin/bash          # shebang: which program runs this
+# a comment
+echo "Hello world!"
+echo -n "no newline "   # -n: no trailing newline</pre>
+<pre>$ chmod u+x hello.sh   # make executable
+$ ./hello.sh           # ./ = look in current dir
+$ which -a bash        # find bash's path(s)</pre>
+      </div>
+      <div class="card">
+        <h3>Typical use: compile + run + show</h3>
+<pre>#!/bin/bash
+g++ add.cpp -o add
+./add &lt; input.txt &gt; output.txt
+cat output.txt</pre>
+        <p class="muted">Groups commands you'd otherwise retype every time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="vars">
+    <h2><span class="n">8</span>Variables, quoting &amp; strings</h2>
+    <p class="lede">Bash has <b>one</b> type: string. Names use letters, digits and <code>_</code>, and are case-sensitive. Set without <code>$</code>, read with <code>$</code>.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Set, read, input</h3>
+<pre>pet="dog"        # NO spaces around =
+echo $pet        # dog
+read name        # set from user input (no $)
+echo "Hello $name"</pre>
+      </div>
+      <div class="card">
+        <h3>Three ways to quote</h3>
+        <div class="tbl"><table>
+          <tr><th>Style</th><th>Behaviour</th></tr>
+          <tr><td><code>a=cat</code></td><td>unquoted: single word only. <code>a=Apple pie</code> → "pie: command not found"</td></tr>
+          <tr><td><code>'…'</code></td><td>literal; <code>$name</code> stays as text</td></tr>
+          <tr><td><code>"…"</code></td><td>expands <code>$var</code>, <code>\</code> escapes, <code>`cmd`</code></td></tr>
+        </table></div>
+<pre>name="Apple"
+echo 'Hello, $name'    # Hello, $name
+echo "Hello, $name"    # Hello, Apple
+echo "\$name = $name"  # $name = Apple</pre>
+      </div>
+      <div class="card">
+        <h3>Command substitution: backquotes</h3>
+<pre>a="`cat file.txt`"
+echo $a       # Apple Banana Cherry (one line)
+echo "$a"     # keeps the newlines
+b="`wc -l file.txt | cut -d\" \" -f1`"
+echo "There are $b lines"</pre>
+        <p class="muted">Inner <code>"</code> must be escaped as <code>\"</code> inside a double-quoted string.</p>
+      </div>
+      <div class="card">
+        <h3>String &amp; number operations</h3>
+        <div class="tbl"><table>
+          <tr><th>Syntax</th><th>Gives</th><th>a="Apple Pie"</th></tr>
+          <tr><td><code>${#a}</code></td><td>length</td><td>9</td></tr>
+          <tr><td><code>${a:pos:len}</code></td><td>substring, index from 0</td><td><code>${a:6:3}</code> → Pie</td></tr>
+          <tr><td><code>${a/from/to}</code></td><td>replace first match</td><td><code>${a/Pie/juice}</code> → Apple juice</td></tr>
+          <tr><td><code>let "b = $x + 9"</code></td><td>arithmetic: <code>+ - * / %</code></td><td>x=10 → b=19</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Command-line arguments</h3>
+        <div class="tbl"><table>
+          <tr><th>Var</th><th>Holds</th></tr>
+          <tr><td><code>$0</code></td><td>script name (<code>./ex2_6.sh</code>)</td></tr>
+          <tr><td><code>$1</code> … <code>$9</code></td><td>arguments 1–9</td></tr>
+          <tr><td><code>${10}</code></td><td>10th+ (<code>$10</code> = $1 followed by "0")</td></tr>
+          <tr><td><code>$#</code></td><td>number of arguments</td></tr>
+        </table></div>
+<pre>$ ./ex2_6.sh we are the world
+There are 4 arguments   # $1=we … $4=world</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <h2><span class="n">9</span>Flow of control: if &amp; for</h2>
+    <p class="lede">Spaces inside the brackets are mandatory: <code>[ "$a" == "b" ]</code>. Quote string variables so values with spaces still compare correctly.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Syntax</h3>
+<pre>if [ cond1 ]
+then
+  echo "1 met"
+elif [ cond2 ]
+then
+  echo "2 met"
+else
+  echo "none"
+fi</pre>
+<pre>list="1 2 3 4 5"      # split on spaces
+for i in $list
+do
+  echo "iteration $i"
+done</pre>
+      </div>
+      <div class="card">
+        <h3>String tests</h3>
+        <div class="tbl"><table>
+          <tr><th>Test</th><th>True iff</th></tr>
+          <tr><td><code>[ "$s" ]</code></td><td>length non-zero</td></tr>
+          <tr><td><code>[ "$a" == "$b" ]</code></td><td>equal</td></tr>
+          <tr><td><code>[ "$a" != "$b" ]</code></td><td>different</td></tr>
+          <tr><td><code>[ "$a" \&gt; "$b" ]</code></td><td>a sorts after b</td></tr>
+          <tr><td><code>[ "$a" \&lt; "$b" ]</code></td><td>a sorts before b</td></tr>
+        </table></div>
+        <p class="muted"><code>\&gt;</code> is escaped so it isn't treated as redirection.</p>
+        <h3>Number tests</h3>
+        <div class="tbl"><table>
+          <tr><td><code>-eq</code> =</td><td><code>-ne</code> ≠</td><td><code>-lt</code> &lt;</td></tr>
+          <tr><td><code>-le</code> ≤</td><td><code>-gt</code> &gt;</td><td><code>-ge</code> ≥</td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>File tests</h3>
+        <div class="tbl"><table>
+          <tr><th>Test</th><th>True iff</th></tr>
+          <tr><td><code>[ -e $f ]</code></td><td>exists</td></tr>
+          <tr><td><code>[ -f $f ]</code></td><td>is a regular file</td></tr>
+          <tr><td><code>[ -d $f ]</code></td><td>is a directory</td></tr>
+          <tr><td><code>[ -s $f ]</code></td><td>size &gt; 0</td></tr>
+          <tr><td><code>[ -r $f ]</code></td><td>readable</td></tr>
+          <tr><td><code>[ -w $f ]</code></td><td>writable</td></tr>
+          <tr><td><code>[ -x $f ]</code></td><td>executable</td></tr>
+        </table></div>
+        <p class="muted">Permission tests apply to whoever runs the script.</p>
+      </div>
+      <div class="card span2">
+        <h3>The pattern the checkpoints keep using: compile, check, run</h3>
+        <div class="grid">
+<pre>#!/bin/bash
+if [ -e hello.cpp ]
+then
+  g++ hello.cpp -o hello 2&gt; error.txt
+  if [ -e hello ]          # exe exists → compiled OK
+  then
+    ./hello
+  else
+    echo "Compilation failed!"
+    cat error.txt
+  fi
+else
+  echo "hello.cpp not found!"
+fi</pre>
+<pre>#!/bin/bash
+# back up every .cpp file
+list="`ls *.cpp`"
+for fileName in $list
+do
+  cp $fileName "$fileName.backup"
+done
+
+# silence a command, report errors on stderr
+cp file123 fileabc 1&gt;/dev/null 2&gt;&amp;1
+if [ -e fileabc ]
+then echo "Copy successful"
+else echo "$0: Oops. Copy failed :(" &gt;&amp;2
+fi</pre>
+        </div>
+        <p class="muted"><code>/dev/null</code> is the bin for unwanted output. <code>echo … &gt;&amp;2</code> writes to stderr, so <code>./script 2&gt; err.txt</code> captures it. While-loops and functions are out of syllabus.</p>
+      </div>
+      <div class="trap">
+        <h3>Shell-script traps</h3>
+        <ul>
+          <li><code>x = 5</code> is wrong; <code>x=5</code> is right.</li>
+          <li><code>[$a == b]</code> is wrong; you need spaces: <code>[ $a == b ]</code>.</li>
+          <li><code>==</code> compares text: "05" ≠ "5". <code>-eq</code> compares numbers: 05 = 5.</li>
+          <li>Single quotes never expand <code>$var</code>.</li>
+          <li><code>read name</code>, not <code>read $name</code>.</li>
+          <li><code>$10</code> is <code>$1</code> + "0". Use <code>${10}</code>.</li>
+          <li>String index starts at 0; cut/sort fields start at 1.</li>
+          <li>Forgot <code>chmod u+x</code>? → "Permission denied".</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="git">
+    <h2><span class="n">10</span>Git: the basic workflow</h2>
+    <p class="lede">Git is a <b>distributed</b> version control system: every copy holds the full history, so you can roll back mistakes and work in parallel without breaking each other's code. Changes move through three local areas, then out to a remote.</p>
+    <div class="grid">
+      <div class="card span2">
+        <div class="diagram">
+        <svg viewBox="0 0 900 250" role="img" aria-label="Git areas: working directory, staging area, local repository and remote, with add, commit, push, pull and diff">
+          <defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker>
+          <marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+          <rect x="20" y="80" width="170" height="74" rx="8" class="box"/>
+          <text x="105" y="111" text-anchor="middle" font-weight="600">Working directory</text>
+          <text x="105" y="131" text-anchor="middle" class="mut" font-size="12">where you edit files</text>
+          <rect x="250" y="80" width="170" height="74" rx="8" class="box"/>
+          <text x="335" y="111" text-anchor="middle" font-weight="600">Staging area</text>
+          <text x="335" y="131" text-anchor="middle" class="mut" font-size="12">changes picked for next commit</text>
+          <rect x="480" y="80" width="170" height="74" rx="8" class="boxa"/>
+          <text x="565" y="111" text-anchor="middle" font-weight="600">Local repository</text>
+          <text x="565" y="131" text-anchor="middle" class="mut" font-size="12">.git/ — saved versions</text>
+          <rect x="710" y="80" width="170" height="74" rx="8" class="box"/>
+          <text x="795" y="111" text-anchor="middle" font-weight="600">Remote repository</text>
+          <text x="795" y="131" text-anchor="middle" class="mut" font-size="12">e.g. GitHub (origin)</text>
+          <line x1="190" y1="117" x2="248" y2="117" class="lna" marker-end="url(#ah3)"/>
+          <text x="219" y="70" text-anchor="middle" class="mono acc" font-size="13">git add</text>
+          <line x1="420" y1="117" x2="478" y2="117" class="lna" marker-end="url(#ah3)"/>
+          <text x="449" y="70" text-anchor="middle" class="mono acc" font-size="13">git commit</text>
+          <line x1="650" y1="117" x2="708" y2="117" class="lna" marker-end="url(#ah3)"/>
+          <text x="679" y="70" text-anchor="middle" class="mono acc" font-size="13">git push</text>
+          <path d="M795 154 C 795 230, 105 230, 105 158" class="ln" marker-end="url(#ah4)"/>
+          <text x="450" y="222" text-anchor="middle" class="mono" font-size="13">git pull  (fetch + merge into your branch)</text>
+          <path d="M105 80 C 105 30, 335 30, 335 78" class="ln dash"/>
+          <text x="220" y="26" text-anchor="middle" class="mono mut" font-size="12">git diff file: working vs staging</text>
+          <text x="565" y="26" text-anchor="middle" class="mono mut" font-size="12">git log: commit history</text>
+          <line x1="565" y1="32" x2="565" y2="78" class="ln dash"/>
+        </svg>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Start a repo</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git version</code></td><td>check Git is installed</td></tr>
+          <tr><td><code>git init</code></td><td>new repo here; creates <code>.git/</code></td></tr>
+          <tr><td><code>git init -q</code></td><td>quiet: only errors and warnings</td></tr>
+          <tr><td><code>git init --bare</code></td><td>repo with no working dir</td></tr>
+          <tr><td><code>git clone URL</code></td><td>full local copy of a remote repo</td></tr>
+          <tr><td><code>git clone --branch b URL</code></td><td>clone one branch</td></tr>
+          <tr><td><code>git clone --mirror URL</code></td><td>all refs, implies --bare</td></tr>
+        </table></div>
+        <p class="muted">Install: <code>sudo apt-get install git</code> · <code>brew install git</code> · gitforwindows.org</p>
+      </div>
+      <div class="card">
+        <h3>Stage, inspect, commit</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git status</code></td><td>untracked (red) vs staged (green)</td></tr>
+          <tr><td><code>git add f</code></td><td>stage one file</td></tr>
+          <tr><td><code>git add .</code></td><td>stage everything under current dir</td></tr>
+          <tr><td><code>git add -A</code></td><td>stage all new/changed in the whole project</td></tr>
+          <tr><td><code>git rm --cached f</code></td><td>unstage</td></tr>
+          <tr><td><code>git diff f</code></td><td>working dir vs staging (empty = no change)</td></tr>
+          <tr><td><code>git diff src tgt</code></td><td>preview a merge between branches</td></tr>
+          <tr><td><code>git diff --base f</code></td><td>conflicts vs common ancestor</td></tr>
+          <tr><td><code>git commit -m "msg"</code></td><td>save staged changes as a commit</td></tr>
+          <tr><td><code>git log</code></td><td>history: 40-char SHA, author, date, message</td></tr>
+        </table></div>
+        <p class="muted">Long output opens a pager: press <code>q</code>, or add <code>--no-pager</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Reading <code>git diff</code></h3>
+<pre>--- a/work.txt          # old (staging)
++++ b/work.txt          # new (working dir)
+@@ -1,2 +1,3 @@         # old: from line 1, 2 lines
+                        # new: from line 1, 3 lines
+ Welcome to my Git tutorial.     # space = in both
+ Today we will learn ...
++We start with the Basic Git Workflow.  # + = added</pre>
+        <p class="muted">Fix your identity with <code>git config --global --edit</code>, then <code>git commit --amend --reset-author</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="branch">
+    <h2><span class="n">11</span>Branching &amp; merging</h2>
+    <p class="lede">A branch is a pointer to its latest commit. <b>HEAD</b> marks where you are now. The notes' example: create <code>BugFix</code>, commit on both branches, merge master into BugFix first (safer), then fast-forward master.</p>
+    <div class="grid">
+      <div class="card span2">
+        <div class="diagram">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Commit graph: master and BugFix diverge, master is merged into BugFix creating a merge commit, then master fast-forwards to it">
+          <defs><marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrow"/></marker></defs>
+          <text x="20" y="74" class="mono mut" font-size="12">master</text>
+          <text x="20" y="174" class="mono mut" font-size="12">BugFix</text>
+          <line x1="110" y1="70" x2="330" y2="70" class="lna"/>
+          <path d="M110 70 C 180 70, 200 170, 330 170" class="lna"/>
+          <line x1="330" y1="170" x2="560" y2="170" class="lna"/>
+          <path d="M330 70 C 430 70, 470 170, 560 170" class="lna"/>
+          <circle cx="110" cy="70" r="11" class="dot"/>
+          <circle cx="330" cy="70" r="11" class="dot"/>
+          <circle cx="330" cy="170" r="11" class="dot"/>
+          <circle cx="560" cy="170" r="13" class="dot2"/>
+          <text x="110" y="42" text-anchor="middle" font-size="12.5">① Added an introduction</text>
+          <text x="330" y="42" text-anchor="middle" font-size="12.5">② Added master.txt</text>
+          <text x="330" y="205" text-anchor="middle" font-size="12.5">③ Added bugfix.txt</text>
+          <text x="560" y="205" text-anchor="middle" font-size="12.5" font-weight="600">④ merge commit</text>
+          <text x="560" y="223" text-anchor="middle" class="mono mut" font-size="11.5">on BugFix: git merge master -m "…"</text>
+          <path d="M342 62 C 470 20, 560 40, 560 150" class="ln dash" marker-end="url(#ah5)"/>
+          <text x="590" y="70" class="mono" font-size="12">⑤ git checkout master</text>
+          <text x="590" y="88" class="mono" font-size="12">   git merge BugFix</text>
+          <text x="590" y="108" font-size="12.5" class="acc" font-weight="600">Fast-forward: master pointer just</text>
+          <text x="590" y="126" font-size="12.5" class="acc" font-weight="600">slides to ④. No new commit.</text>
+          <text x="640" y="174" class="mono" font-size="12">◄ BugFix, master, HEAD</text>
+        </svg>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Branch commands</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git branch</code></td><td>list branches</td></tr>
+          <tr><td><code>git branch b</code></td><td>create (you stay where you are)</td></tr>
+          <tr><td><code>git checkout b</code></td><td>switch to b</td></tr>
+          <tr><td><code>git checkout -b b</code></td><td>create + switch</td></tr>
+          <tr><td><code>git branch -m old new</code></td><td>rename</td></tr>
+          <tr><td><code>git branch --merged</code></td><td>branches fully merged into current</td></tr>
+          <tr><td><code>git branch -d b</code></td><td>delete merged branch (not HEAD)</td></tr>
+          <tr><td><code>git branch -D b</code></td><td>delete unmerged branch</td></tr>
+          <tr><td><code>git checkout BugFix^</code></td><td>one commit back (<code>^^</code> = two) → <b>detached HEAD</b></td></tr>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>Merge commands</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git merge b</code></td><td>merge b into current (fast-forward if possible)</td></tr>
+          <tr><td><code>git merge --ff-only b</code></td><td>only if it can fast-forward</td></tr>
+          <tr><td><code>git merge --no-ff b</code></td><td>always make a merge commit</td></tr>
+          <tr><td><code>git merge --abort</code></td><td>bail out of a conflicted merge</td></tr>
+          <tr><td><code>git cherry-pick 073791e7</code></td><td>apply just one commit</td></tr>
+        </table></div>
+        <p class="muted">If both branches changed the same thing, Git stops with a <b>conflict</b> you must resolve. Rebasing is the alternative to merging (not covered in depth).</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="remote">
+    <h2><span class="n">12</span>Remotes: push &amp; pull</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Managing remotes</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git remote</code></td><td>list short names (e.g. origin)</td></tr>
+          <tr><td><code>git remote -v</code></td><td>…with fetch/push URLs</td></tr>
+          <tr><td><code>git remote add pb URL</code></td><td>add remote named pb</td></tr>
+          <tr><td><code>git remote rm name</code></td><td>remove</td></tr>
+          <tr><td><code>git remote rename a b</code></td><td>rename</td></tr>
+          <tr><td><code>git remote show origin</code></td><td>details: URLs, tracked branches</td></tr>
+        </table></div>
+        <p class="muted">A cloned repo's remote is automatically called <code>origin</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Push (upload) &amp; pull (download)</h3>
+        <div class="tbl"><table>
+          <tr><th>Command</th><th>Does</th></tr>
+          <tr><td><code>git push origin master</code></td><td>upload commits on master</td></tr>
+          <tr><td><code>git push r --force</code></td><td>push even if not fast-forward</td></tr>
+          <tr><td><code>git push r --all</code></td><td>push every local branch</td></tr>
+          <tr><td><code>git push r --tags</code></td><td>push all tags</td></tr>
+          <tr><td><code>git pull</code> / <code>git pull r</code></td><td>fetch + merge into current branch</td></tr>
+          <tr><td><code>git pull --no-commit r</code></td><td>fetch but don't create the merge commit</td></tr>
+          <tr><td><code>git pull --verbose</code></td><td>detailed output</td></tr>
+        </table></div>
+      </div>
+      <div class="trap">
+        <h3>Git traps</h3>
+        <ul>
+          <li><code>git commit</code> saves to your <b>local</b> repo only. Nobody sees it until you <code>git push</code>.</li>
+          <li>Push rejected? Someone pushed first. <code>git pull</code>, merge, then push again.</li>
+          <li><code>git branch b</code> doesn't switch you to b. Use <code>checkout</code> or <code>checkout -b</code>.</li>
+          <li>Fast-forward creates <b>no</b> commit; a real merge does (give it <code>-m</code>).</li>
+          <li><code>git diff</code> with no output means working dir = staging.</li>
+          <li><code>-d</code> deletes merged branches; <code>-D</code> forces unmerged ones.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="vpl">
+    <h2><span class="n">13</span>VPL on Moodle</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Steps</h3>
+        <ol class="steps">
+          <li>Open the VPL activity, click <b>Edit</b>.</li>
+          <li>Paste your code, click <b>Save</b>. Saving <b>is</b> submitting.</li>
+          <li><b>Run</b> (optional, not always available). Test locally first.</li>
+          <li><b>Evaluate</b> and read the result. Fix and repeat.</li>
+        </ol>
+      </div>
+      <div class="trap">
+        <h3>VPL rules</h3>
+        <ul>
+          <li>Save before you can Run or Evaluate.</li>
+          <li>Edited after evaluating? Save and evaluate again.</li>
+          <li>Empty result = you did not pass.</li>
+          <li>Avoid the separate Submission feature (past errors; may need VPN).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from the COMP2113 notes: Module 1 Linux Environment, Module 2 Shell Script, Version Control, Quick VPL guide, and the Shell Command &amp; Shell Script slides.</p></footer>
+<script src="sheet.js"></script>
+<script>
+(function(){
+  // ---------- permission toggler ----------
+  var bits=['-','r','w','-','-','-','-','-','-','-'];
+  var letters=['d','r','w','x','r','w','x','r','w','x'];
+  var permEl=document.getElementById('perm');
+  var outEl=document.getElementById('permOut');
+  var enEl=document.getElementById('permEn');
+  var names=['type','user read','user write','user execute','group read','group write','group execute','other read','other write','other execute'];
+  function render(){
+    permEl.innerHTML='';
+    bits.forEach(function(b,i){
+      if(i===1||i===4||i===7){var g=document.createElement('span');g.className='gap';permEl.appendChild(g);}
+      var btn=document.createElement('button');
+      btn.type='button';btn.id='perm-'+i;btn.textContent=b;
+      btn.className=b!=='-'?'on':'';
+      btn.setAttribute('aria-label',names[i]+(b!=='-'?' on':' off'));
+      btn.setAttribute('aria-pressed',b!=='-');
+      btn.addEventListener('click',function(){bits[i]=bits[i]==='-'?letters[i]:'-';render();document.getElementById('perm-'+i).focus();});
+      permEl.appendChild(btn);
+    });
+    var s=bits.join('');
+    function part(a){return bits.slice(a,a+3).join('').replace(/-/g,'');}
+    outEl.textContent=s+'   →   chmod u='+part(1)+',g='+part(4)+',o='+part(7)+' file';
+    var w={r:'read',w:'write',x:'execute'};
+    function eng(a){var p=part(a).split('').filter(Boolean).map(function(c){return w[c];});return p.length?p.join(', '):'nothing';}
+    enEl.textContent=(bits[0]==='d'?'A directory. ':'A normal file. ')+'Owner: '+eng(1)+'. Group: '+eng(4)+'. Others: '+eng(7)+'.';
+  }
+  render();
+
+  // ---------- regex tester ----------
+  var ex3='apple\ncoco\ncherries\norange\nape\nangel';
+  var ex2='apple\npineapple\napple pie';
+  var ex4='Apple Juice HKD13\napple pie USD4\nBanana phone HKD';
+  var ex5='2April2013\n30-1-2013\n13December2013';
+  var presets=[
+    {p:'^ap?',t:ex3,w:'a followed by zero or one p, at line start: apple, ape, angel.'},
+    {p:'^ap+',t:ex3,w:'a followed by one or more p: angel drops out.'},
+    {p:'^ap*',t:ex3,w:'a followed by zero or more p: same lines as ^ap? here.'},
+    {p:'a.*ge',t:ex3,w:'a, then any characters, then ge: orange and angel.'},
+    {p:'(co)+',t:ex3,w:'The group "co" one or more times: only coco.'},
+    {p:'co*',t:ex3,w:'c then zero or more o, so cherries matches too.'},
+    {p:'^apple$',t:ex2,w:'The whole line must be exactly apple.'},
+    {p:'apple$',t:ex2,w:'apple at the end of the line.'},
+    {p:'^.....$',t:ex2,w:'Exactly five characters on the line.'},
+    {p:'[Aa]pple',t:ex4,w:'Either capital or small A.'},
+    {p:'HKD[0-9]*',t:ex4,w:'HKD followed by zero or more digits.'},
+    {p:'^[0-9]{1,2}[a-zA-Z]{3,}[0-9]{4}',t:ex5,w:'1–2 digit day, 3+ letter month, 4 digit year.'}
+  ];
+  var pre=document.getElementById('rxPresets'),pat=document.getElementById('rxPat'),txt=document.getElementById('rxText'),out=document.getElementById('rxOut'),why=document.getElementById('rxWhy');
+  presets.forEach(function(x){
+    var b=document.createElement('button');b.type='button';b.textContent=x.p;
+    b.addEventListener('click',function(){pat.value=x.p;txt.value=x.t;why.textContent=x.w;run();});
+    pre.appendChild(b);
+  });
+  function run(){
+    out.innerHTML='';
+    var re;
+    try{re=new RegExp(pat.value);}catch(e){var d=document.createElement('div');d.className='err';d.textContent='Invalid pattern: '+e.message;out.appendChild(d);return;}
+    var lines=txt.value.split('\n'),n=0;
+    lines.forEach(function(l){
+      if(l==='')return;
+      var d=document.createElement('div');var hit=re.test(l);if(hit)n++;
+      d.className=hit?'hit':'miss';d.textContent=l;out.appendChild(d);
+    });
+    var c=document.createElement('div');c.className='rx-note';c.style.marginTop='6px';
+    c.textContent=n+' line'+(n===1?'':'s')+' printed by grep';out.appendChild(c);
+  }
+  pat.addEventListener('input',function(){why.textContent='';run();});
+  txt.addEventListener('input',run);
+  pat.value=presets[0].p;txt.value=presets[0].t;why.textContent=presets[0].w;run();
+})();
+</script>
+</body>
+</html>
+

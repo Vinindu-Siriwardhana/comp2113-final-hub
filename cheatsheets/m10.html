@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 10</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 10: C vs C++, printf and scanf, C-strings and string.h, pointers for pass by reference, malloc and free, struct and typedef, and the GDB debugger.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>.vis{font-family:var(--f-mono);background:var(--code);padding:1px 6px;border-radius:4px;white-space:pre}.vis i{color:var(--muted);font-style:normal}</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 10: C Programming &amp; GDB</h1>
+  <p>Same logic as C++, smaller toolbox: printf and scanf instead of streams, char arrays instead of string, pointers instead of references, malloc and free instead of new and delete. Plus GDB for finding crashes.</p>
+  <div class="chips"><span class="chip">Slides: C Programming</span><span class="chip">C Programming 1–3</span><span class="chip">GDB Debugger</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#cvs">C vs C++</a><a href="#printf">printf</a><a href="#scanf">scanf</a><a href="#strings">C-strings</a><a href="#ptrs">Pointers &amp; arrays</a><a href="#malloc">malloc / free</a><a href="#struct">struct &amp; typedef</a><a href="#gdb">GDB</a><a href="#predict">Predict</a>
+</div></nav>
+
+<div class="band a2"><div class="wrap">
+
+<section id="cvs">
+  <h2><span class="n">1</span>C vs C++</h2>
+  <p class="lede">C is C++'s lower-level predecessor: no classes, no STL, no namespaces, no iostream. Operating systems and networking libraries are mostly C. Any C program is also valid C++, not the other way round.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="tbl"><table>
+        <tr><th>Feature</th><th>C++</th><th>C</th></tr>
+        <tr><td>Source file</td><td><code>.cpp</code></td><td><code>.c</code></td></tr>
+        <tr><td>Compile</td><td><code>g++ -pedantic-errors -std=c++11 a.cpp -o a</code></td><td><code>gcc -pedantic-errors -std=c11 a.c -o a</code></td></tr>
+        <tr><td>I/O header</td><td><code>&lt;iostream&gt;</code></td><td><code>&lt;stdio.h&gt;</code></td></tr>
+        <tr><td>Output / input</td><td><code>cout &lt;&lt;</code> / <code>cin &gt;&gt;</code></td><td><code>printf()</code> / <code>scanf()</code></td></tr>
+        <tr><td>New line</td><td><code>endl</code> or <code>"\n"</code></td><td><code>"\n"</code> only</td></tr>
+        <tr><td>Namespace</td><td><code>using namespace std;</code></td><td>none</td></tr>
+        <tr><td>Text</td><td><code>string</code></td><td><code>char s[]</code> + <code>&lt;string.h&gt;</code></td></tr>
+        <tr><td>Pass by reference</td><td><code>void f(int &amp;x)</code></td><td><code>void f(int *x)</code>, call <code>f(&amp;a)</code></td></tr>
+        <tr><td>Heap memory</td><td><code>new</code> / <code>delete</code></td><td><code>malloc</code> / <code>free</code> (<code>&lt;stdlib.h&gt;</code>)</td></tr>
+        <tr><td>Grouping data</td><td>struct / class with methods</td><td>struct: data only, no access control</td></tr>
+        <tr><td>Struct variable</td><td><code>Point p;</code></td><td><code>struct Point p;</code> (or use typedef)</td></tr>
+        <tr><td><code>bool</code></td><td>built in</td><td>needs <code>&lt;stdbool.h&gt;</code></td></tr>
+        <tr><td>Maths</td><td><code>&lt;cmath&gt;</code></td><td><code>&lt;math.h&gt;</code></td></tr>
+        <tr><td><code>for (int i = 0; …)</code></td><td>always</td><td>C99 onwards (old C89: declare at the top)</td></tr>
+        <tr><td>Constants</td><td><code>const</code></td><td><code>const</code> or <code>#define PI 3.14159</code></td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="printf">
+  <h2><span class="n">2</span>printf: formatted output</h2>
+  <p class="lede">Put a conversion specifier in the string for each value; values fill them in order. The specifier must match the type or the output is garbage. <span class="vis"><i>·</i></span> marks a space.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Conversion specifiers</h3>
+      <div class="tbl"><table>
+        <tr><th>Type</th><th>printf</th><th>scanf</th></tr>
+        <tr><td><code>int</code></td><td><code>%d</code></td><td><code>%d</code></td></tr>
+        <tr><td><code>float</code></td><td><code>%f</code></td><td><code>%f</code></td></tr>
+        <tr><td><code>double</code></td><td><code>%f</code></td><td><code>%lf</code></td></tr>
+        <tr><td><code>char</code></td><td><code>%c</code></td><td><code>%c</code></td></tr>
+        <tr><td>C-string</td><td><code>%s</code></td><td><code>%s</code> (no &amp;)</td></tr>
+        <tr><td>float/double, no trailing zeros</td><td><code>%g</code></td><td></td></tr>
+        <tr><td>a literal %</td><td><code>%%</code></td><td></td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Width and precision</h3>
+      <div class="tbl"><table>
+        <tr><th>Call</th><th>Prints</th></tr>
+        <tr><td><code>printf("%f", 3.14);</code></td><td><span class="vis">3.140000</span> (6 places)</td></tr>
+        <tr><td><code>printf("%.2f", 3.14159);</code></td><td><span class="vis">3.14</span></td></tr>
+        <tr><td><code>printf("%g", 30.0);</code></td><td><span class="vis">30</span></td></tr>
+        <tr><td><code>printf("%5d|", 42);</code></td><td><span class="vis"><i>···</i>42|</span> right-justified</td></tr>
+        <tr><td><code>printf("%-5d|", 42);</code></td><td><span class="vis">42<i>···</i>|</span> left</td></tr>
+        <tr><td><code>printf("%8.2f", 3.14159);</code></td><td><span class="vis"><i>····</i>3.14</span></td></tr>
+        <tr><td><code>printf("%d%%", 50);</code></td><td><span class="vis">50%</span></td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Examples from the notes</h3>
+<pre>int a = 1, b = 2;  double c = -10.5;
+printf("Input %d %d %f\n", a, b, c);
+// Input 1 2 -10.500000
+printf("Their sum = %g\n", a + b + c);
+// Their sum = -7.5   (int + int + double is double)
+
+printf("%8s %8s %8s\n", "Name", "Age", "Weight");
+printf("%8s %8d %8f\n", "Chim", 33, 30.0);
+//     Name      Age   Weight
+//     Chim       33 30.000000
+
+printf("Input %d %d %d\n", a, b, c);
+// %d for a double: undefined, wrong value printed</pre>
+    </div>
+  </div>
+</section>
+
+<section id="scanf">
+  <h2><span class="n">3</span>scanf: formatted input</h2>
+  <div class="grid">
+    <div class="card">
+<pre>int a;  float b;  double d;  char c;  char name[20];
+
+scanf("%d%f", &amp;a, &amp;b);    // give ADDRESSES: &amp;
+scanf("%lf", &amp;d);          // double needs %lf
+scanf(" %c", &amp;c);          // space skips leftover newline
+scanf("%s", name);         // array name is already an address
+printf("Product = %g\n", a * b);
+
+char n[20], p[20]; int sal;
+scanf("%s%s%d", n, p, &amp;sal);   // several at once</pre>
+      <p class="muted">printf takes <b>values</b>; scanf takes <b>addresses</b> so it can write into your variables. <code>%s</code> reads one word (stops at whitespace); <code>fgets(s, 20, stdin)</code> reads a whole line and keeps the <code>'\n'</code>.</p>
+    </div>
+    <div class="trap">
+      <h3>printf / scanf traps</h3>
+      <ul>
+        <li><code>scanf("%d", a)</code> without <code>&amp;</code> → crash.</li>
+        <li><code>scanf("%s", &amp;name)</code>: no <code>&amp;</code> needed for an array.</li>
+        <li><code>%f</code> in scanf for a double reads wrongly: use <code>%lf</code>.</li>
+        <li>Specifier must match the type in printf, or the value is garbage.</li>
+        <li><code>%f</code> always shows 6 decimals unless you write <code>%.2f</code> or use <code>%g</code>.</li>
+        <li>No <code>endl</code> in C.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="strings">
+  <h2><span class="n">4</span>C-strings and &lt;string.h&gt;</h2>
+  <div class="grid">
+    <div class="card">
+      <h3><code>char name[] = "Chim";</code></h3>
+      <div class="cells"><div class="cell"><b>C</b><small>[0]</small></div><div class="cell"><b>h</b><small>[1]</small></div><div class="cell"><b>i</b><small>[2]</small></div><div class="cell"><b>m</b><small>[3]</small></div><div class="cell"><b class="nul">\0</b><small>[4]</small></div></div>
+      <div class="tbl"><table>
+        <tr><th>Call</th><th>Effect</th></tr>
+        <tr><td><code>strcpy(s1, s2)</code></td><td>copy s2 into s1</td></tr>
+        <tr><td><code>strcat(s1, s2)</code></td><td>append s2 to the end of s1</td></tr>
+        <tr><td><code>strcmp(s1, s2)</code></td><td>0 equal · &lt;0 s1 first · &gt;0 s1 after</td></tr>
+        <tr><td><code>strlen(s1)</code></td><td>length without the '\0'</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>In C you can't…</h3>
+<pre>char a[20] = "comp";
+char b[] = "2113";
+a = b;              // ✗ arrays can't be assigned
+strcpy(a, b);       // ✓ a is "2113"
+strcat(a, "!");     // ✓ a is "2113!"
+if (a == b)         // ✗ compares addresses
+if (strcmp(a, b) == 0)   // ✓</pre>
+      <p class="muted">The destination of strcpy / strcat must already have room for the result plus <code>'\0'</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Lower-case a word (Checkpoint 10.2b)</h3>
+<pre>#include &lt;ctype.h&gt;
+void toLower(char a[]) {
+    for (int i = 0; i &lt; strlen(a); i++)
+        if (a[i] &gt;= 'A' &amp;&amp; a[i] &lt;= 'Z')
+            a[i] = a[i] + ('a' - 'A');   // or tolower(a[i])
+}
+char input[100];
+scanf("%s", input);
+toLower(input);
+printf("%s\n", input);</pre>
+    </div>
+  </div>
+</section>
+
+<section id="ptrs">
+  <h2><span class="n">5</span>Pass by reference with pointers, arrays</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Three swaps (from the notes)</h3>
+<pre>void swap1(double a, double b);    // by value: no effect
+void swap2(double &amp;a, double &amp;b);  // C++ only: gcc rejects it
+void swap3(double *a, double *b) { // C: pass addresses
+    double temp = *a;
+    *a = *b;
+    *b = temp;
+}
+swap3(&amp;x, &amp;y);</pre>
+    </div>
+    <div class="card">
+      <h3>Arrays are passed as addresses</h3>
+<pre>void salary_increase(int sal[]) {
+    for (int i = 0; i &lt; 4; i++)
+        sal[i] = sal[i] * 1.1;
+}
+// same thing, pointer style
+void salary_increase(int *sal) {
+    for (int i = 0; i &lt; 4; i++) {
+        *sal = *sal * 1.1;
+        sal++;
+    }
+}</pre>
+      <p class="muted"><code>sal[i]</code> is <code>*(sal + i)</code>. Changes inside reach the caller's array.</p>
+    </div>
+  </div>
+</section>
+
+<section id="malloc">
+  <h2><span class="n">6</span>malloc and free</h2>
+  <div class="grid">
+    <div class="card">
+<pre>#include &lt;stdlib.h&gt;
+int size = 10;
+int *a = (int *)malloc(size * sizeof(int));
+if (a != NULL) {          // malloc returns NULL on failure
+    for (int i = 0; i &lt; size; i++) a[i] = i;
+    free(a);              // exactly once
+}</pre>
+      <div class="tbl"><table>
+        <tr><th>Part</th><th>Meaning</th></tr>
+        <tr><td><code>sizeof(int)</code></td><td>bytes for one int</td></tr>
+        <tr><td><code>size * sizeof(int)</code></td><td>bytes for the whole array</td></tr>
+        <tr><td><code>malloc(…)</code></td><td>returns <code>void *</code>, the start address</td></tr>
+        <tr><td><code>(int *)</code></td><td>cast to the right pointer type</td></tr>
+        <tr><td><code>free(a)</code></td><td>give the memory back</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>C++ → C</h3>
+      <div class="tbl"><table>
+        <tr><th>C++</th><th>C</th></tr>
+        <tr><td><code>int *p = new int;</code></td><td><code>int *p = (int *)malloc(sizeof(int));</code></td></tr>
+        <tr><td><code>int *a = new int[n];</code></td><td><code>int *a = (int *)malloc(n * sizeof(int));</code></td></tr>
+        <tr><td><code>delete p;</code> / <code>delete [] a;</code></td><td><code>free(p);</code> / <code>free(a);</code></td></tr>
+        <tr><td><code>Node *n = new Node;</code></td><td><code>Node *n = (Node *)malloc(sizeof(Node));</code></td></tr>
+      </table></div>
+      <p class="muted"><code>malloc(n)</code> without sizeof allocates n <b>bytes</b>, not n elements.</p>
+    </div>
+  </div>
+</section>
+
+<section id="struct">
+  <h2><span class="n">7</span>struct and typedef</h2>
+  <div class="grid">
+    <div class="card">
+<pre>struct Student {
+    char name[100];      // no string class in C
+    int uid;
+};
+struct Student s1;       // C needs the word struct
+
+typedef struct Student Student;   // alias
+Student s2;              // now one word is enough
+
+typedef struct node {    // self-referencing: keep the tag
+    int val;
+    struct node *next;   // typedef name not defined yet here
+} Node;
+Node *n = (Node *)malloc(sizeof(Node));
+n-&gt;val = 1;  n-&gt;next = NULL;</pre>
+    </div>
+    <div class="card">
+      <h3>C structs have</h3>
+      <div class="tbl"><table>
+        <tr><td>Data members</td><td>✓</td></tr>
+        <tr><td>Member functions</td><td>✗ write helper functions instead</td></tr>
+        <tr><td>public / private</td><td>✗</td></tr>
+        <tr><td>Constructors / destructors</td><td>✗</td></tr>
+      </table></div>
+<pre>void printStudent(struct Student *s) {
+    printf("%s %d\n", s-&gt;name, s-&gt;uid);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="gdb">
+  <h2><span class="n">8</span>GDB, the GNU debugger</h2>
+  <p class="lede">Print statements clutter output and get forgotten. A debugger lets you pause at a <b>breakpoint</b>, step line by line and <b>watch variables</b>, which is how you find runtime errors like segmentation faults.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 880 130" role="img" aria-label="Compile with -g, gdb program, set breakpoint, run, step and print, quit">
+        <defs><marker id="g1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <g font-size="13">
+          <rect x="10" y="20" width="150" height="62" rx="8" class="boxa"/><text x="85" y="44" text-anchor="middle" font-weight="600">compile with -g</text><text x="85" y="66" text-anchor="middle" class="mono" font-size="11">g++ -g a.cpp -o a</text>
+          <rect x="190" y="20" width="120" height="62" rx="8" class="box"/><text x="250" y="44" text-anchor="middle" font-weight="600">start gdb</text><text x="250" y="66" text-anchor="middle" class="mono" font-size="12">gdb a</text>
+          <rect x="340" y="20" width="120" height="62" rx="8" class="box"/><text x="400" y="44" text-anchor="middle" font-weight="600">breakpoint</text><text x="400" y="66" text-anchor="middle" class="mono" font-size="12">b 8</text>
+          <rect x="490" y="20" width="100" height="62" rx="8" class="box"/><text x="540" y="44" text-anchor="middle" font-weight="600">run</text><text x="540" y="66" text-anchor="middle" class="mono" font-size="12">r</text>
+          <rect x="620" y="20" width="140" height="62" rx="8" class="boxw"/><text x="690" y="44" text-anchor="middle" font-weight="600">step &amp; inspect</text><text x="690" y="66" text-anchor="middle" class="mono" font-size="12">n · p i · l</text>
+          <rect x="790" y="20" width="80" height="62" rx="8" class="box"/><text x="830" y="44" text-anchor="middle" font-weight="600">quit</text><text x="830" y="66" text-anchor="middle" class="mono" font-size="12">q</text>
+          <line x1="160" y1="51" x2="188" y2="51" class="lna" marker-end="url(#g1)"/><line x1="310" y1="51" x2="338" y2="51" class="lna" marker-end="url(#g1)"/><line x1="460" y1="51" x2="488" y2="51" class="lna" marker-end="url(#g1)"/><line x1="590" y1="51" x2="618" y2="51" class="lna" marker-end="url(#g1)"/><line x1="760" y1="51" x2="788" y2="51" class="lna" marker-end="url(#g1)"/>
+          <text x="440" y="116" text-anchor="middle" class="mut">gdb runs the compiled program (gdb a), not the source file (gdb a.cpp)</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Commands</h3>
+      <div class="tbl"><table>
+        <tr><th>Short</th><th>Long</th><th>Does</th></tr>
+        <tr><td><code>r</code></td><td><code>run</code></td><td>start the program</td></tr>
+        <tr><td><code>b 8</code></td><td><code>break 8</code></td><td>breakpoint at line 8</td></tr>
+        <tr><td><code>clear</code></td><td></td><td>remove a breakpoint</td></tr>
+        <tr><td><code>n</code></td><td><code>next</code></td><td>run the next line</td></tr>
+        <tr><td><code>p i</code></td><td><code>print i</code></td><td>show a variable's value</td></tr>
+        <tr><td><code>l</code></td><td><code>list</code></td><td>show the source code</td></tr>
+        <tr><td><code>q</code></td><td><code>quit</code></td><td>leave gdb</td></tr>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>Finding the segfault (notes' example)</h3>
+<pre>Node *current = NULL;
+for (int i = 0; i &lt; 5; i++) {
+    Node *_newNode = new Node;
+    _newNode-&gt;id = i;
+    _newNode-&gt;next = NULL;
+    current-&gt;next = _newNode;   // line 15: bug
+}</pre>
+<pre>$ gdb hello
+(gdb) r
+Program received signal SIGSEGV, Segmentation fault.
+0x... in main () at hello.cpp:15
+15      current-&gt;next = _newNode;
+(gdb) p i
+$1 = 0                      ← first iteration
+(gdb) p current
+$2 = (Node *) 0x0           ← NULL: that's the bug
+(gdb) q</pre>
+      <p class="muted">SIGSEGV = invalid memory access. Print every pointer on the faulting line; the one showing <code>0x0</code> is NULL.</p>
+    </div>
+    <div class="trap">
+      <h3>GDB notes</h3>
+      <ul>
+        <li>Without <code>-g</code>, gdb can't show line numbers or variable names.</li>
+        <li>At a breakpoint, that line has <b>not run yet</b>: variables it sets still hold garbage.</li>
+        <li>"No symbol "i" in current context" = i isn't declared at this point (e.g. before its loop).</li>
+        <li>Online alternative with a visual panel: onlinegdb.com.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">9</span>Predict the output</h2>
+  <div class="qa">
+    <details><summary>printf("%d %.1f\n", 7 / 2, 7 / 2.0);</summary><p>3 3.5</p></details>
+    <details><summary>printf("[%4d][%-4d]", 5, 5);</summary><p>[···5][5···]</p></details>
+    <details><summary>char s[10] = "ab";
+strcat(s, "cd");
+printf("%s %d", s, (int)strlen(s));</summary><p>abcd 4</p></details>
+    <details><summary>printf("%g %f", 2.50, 2.5);</summary><p>2.5 2.500000</p></details>
+    <details><summary>void f(int *p) { *p = *p * 2; }
+int x = 4; f(&amp;x); printf("%d", x);</summary><p>8</p></details>
+    <details><summary>int *a = (int *)malloc(3 * sizeof(int));
+a[0] = 1; *(a + 1) = 2; a[2] = a[0] + a[1];
+printf("%d", *(a + 2)); free(a);</summary><p>3</p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from the Module 10 C Programming slides, C Programming 1–3 notes and the GDB Debugger notes.</p></footer>
+<script src="sheet.js"></script>
+</body>
+</html>

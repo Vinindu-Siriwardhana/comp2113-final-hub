@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>COMP2113 Module 9</title>
+<meta name="description" content="Visual cheat sheet for COMP2113 Module 9, the Standard Template Library: vector, list, map, iterators, sort and operator overloading.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="sheet.css">
+<script>try{var t=JSON.parse(localStorage.getItem('c2113')||'{}').theme;if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
+<style>.yes{color:var(--ok);font-weight:600}.no{color:var(--bad)}</style>
+</head>
+<body>
+<nav class="modbar" aria-label="Modules"><div class="wrap" id="modbar"></div></nav>
+<header class="hero"><div class="wrap">
+  <span class="eyebrow">COMP2113 visual cheat sheet</span>
+  <h1>Module 9: Standard Template Library</h1>
+  <p>Ready-made containers so you don't have to hand-build arrays and linked lists: vector, list and map, the iterators that walk them, and the sort algorithm. Sample Q6 is a list&lt;string&gt; question.</p>
+  <div class="chips"><span class="chip">Slides: STL Containers, Iterators, Algorithms</span><span class="chip">STL Containers</span><span class="chip">STL Iterators</span></div>
+</div></header>
+<nav class="toc" aria-label="Sections"><div class="wrap">
+  <a href="#what">What STL is</a><a href="#containers">Three containers</a><a href="#compare">Which one?</a><a href="#iter">Iterators</a><a href="#map">map</a><a href="#sort">sort &amp; operator&lt;</a><a href="#phone">Phone book</a><a href="#predict">Predict</a>
+</div></nav>
+
+<div class="band a1"><div class="wrap">
+
+<section id="what">
+  <h2><span class="n">1</span>Three parts of the STL</h2>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 880 150" role="img" aria-label="Algorithms use iterators to reach the data inside containers">
+        <defs><marker id="f1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker></defs>
+        <rect x="20" y="30" width="230" height="80" rx="10" class="box"/><text x="135" y="62" text-anchor="middle" font-weight="600" font-size="16">Algorithms</text><text x="135" y="86" text-anchor="middle" class="mono mut" font-size="13">sort(), find() …</text>
+        <rect x="325" y="30" width="230" height="80" rx="10" class="boxa"/><text x="440" y="62" text-anchor="middle" font-weight="600" font-size="16">Iterators</text><text x="440" y="86" text-anchor="middle" class="mono mut" font-size="13">generalised pointers</text>
+        <rect x="630" y="30" width="230" height="80" rx="10" class="box"/><text x="745" y="62" text-anchor="middle" font-weight="600" font-size="16">Containers</text><text x="745" y="86" text-anchor="middle" class="mono mut" font-size="13">vector, list, map</text>
+        <line x1="250" y1="70" x2="323" y2="70" class="lna" marker-end="url(#f1)"/><line x1="555" y1="70" x2="628" y2="70" class="lna" marker-end="url(#f1)"/>
+        <text x="440" y="138" text-anchor="middle" class="mut" font-size="13">An algorithm never touches a container directly; it works on a range of iterators.</text>
+      </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="containers">
+  <h2><span class="n">2</span>The three containers</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>vector — dynamic array</h3>
+<pre>#include &lt;vector&gt;
+vector&lt;int&gt; v;                // empty
+vector&lt;int&gt; w(5, 0);          // five zeros
+v.push_back(3);               // add at end
+v.pop_back();                 // remove last
+v[0];  v.front();  v.back();
+v.size();  v.empty();  v.clear();
+v.insert(v.begin() + 1, 9);   // before index 1
+v.erase(v.begin());           // remove first</pre>
+      <p class="muted">Fast index access and fast add/remove at the end.</p>
+    </div>
+    <div class="card">
+      <h3>list — doubly linked list</h3>
+<pre>#include &lt;list&gt;
+list&lt;string&gt; L;
+L.push_back("b");  L.push_front("a");
+L.pop_back();      L.pop_front();
+L.front();  L.back();  L.size();
+L.sort();                     // member sort
+L.remove("a");                // every "a"
+list&lt;string&gt;::iterator it = L.begin();
+it++;                         // only ++ / --
+L.insert(it, "x");            // before it
+it = L.erase(it);             // returns next</pre>
+      <p class="muted">Fast add/remove at both ends and anywhere you hold an iterator. No <code>L[2]</code>.</p>
+    </div>
+    <div class="card">
+      <h3>map — sorted key → value</h3>
+<pre>#include &lt;map&gt;
+map&lt;string, int&gt; book;
+book["Amy"] = 5551234;        // insert or overwrite
+book["Bob"]++;                // missing key starts at 0
+book.count("Kit");            // 1 if present, else 0
+book.find("Kit") == book.end(); // true if absent
+book.erase("Amy");
+book.size();</pre>
+      <p class="muted">Like a Python dict, but keys are unique and kept in <b>sorted order</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <h2><span class="n">3</span>Which container?</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Cost of each operation</h3>
+      <div class="tbl"><table>
+        <tr><th>Operation</th><th>vector</th><th>list</th><th>map</th></tr>
+        <tr><td>add / remove at back</td><td class="yes">O(1)</td><td class="yes">O(1)</td><td>—</td></tr>
+        <tr><td>add / remove at front</td><td class="no">O(n)</td><td class="yes">O(1)</td><td>—</td></tr>
+        <tr><td>insert / erase in middle</td><td class="no">O(n)</td><td class="yes">O(1)*</td><td>—</td></tr>
+        <tr><td>access by index <code>[i]</code></td><td class="yes">O(1)</td><td class="no">not supported</td><td>—</td></tr>
+        <tr><td>search for a value / key</td><td class="no">O(n)</td><td class="no">O(n)</td><td class="yes">O(log n)</td></tr>
+        <tr><td>size()</td><td class="yes">O(1)</td><td class="yes">O(1)</td><td class="yes">O(1)</td></tr>
+      </table></div>
+      <p class="muted">* once you have an iterator at that spot. O(1) = same work however big; O(log n) = grows slowly; O(n) = grows with the size.</p>
+    </div>
+    <div class="card">
+      <h3>Rule of thumb</h3>
+      <div class="tbl"><table>
+        <tr><th>You mostly need to…</th><th>Use</th></tr>
+        <tr><td class="wrap-ok">jump to position i quickly</td><td><code>vector</code></td></tr>
+        <tr><td class="wrap-ok">add/remove at both ends, or in the middle</td><td><code>list</code></td></tr>
+        <tr><td class="wrap-ok">look things up by a key (name → number)</td><td><code>map</code></td></tr>
+        <tr><td class="wrap-ok">count how often each word appears</td><td><code>map&lt;string,int&gt;</code> + <code>m[w]++</code></td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="iter">
+  <h2><span class="n">4</span>Iterators</h2>
+  <p class="lede">An iterator marks a position in a container and behaves like a pointer: <code>*it</code> is the element, <code>it++</code> moves on. The same loop works for every container, which is why we use iterators instead of indexes.</p>
+  <div class="grid">
+    <div class="card span2">
+      <div class="diagram">
+      <svg viewBox="0 0 860 150" role="img" aria-label="begin points at the first element; end points one past the last">
+        <defs><marker id="f2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arrowa"/></marker>
+        <marker id="f3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arroww"/></marker></defs>
+        <g class="mono" font-size="16" text-anchor="middle">
+          <rect x="150" y="60" width="100" height="44" class="boxa"/><text x="200" y="88">10</text>
+          <rect x="250" y="60" width="100" height="44" class="box"/><text x="300" y="88">20</text>
+          <rect x="350" y="60" width="100" height="44" class="box"/><text x="400" y="88">30</text>
+          <rect x="450" y="60" width="100" height="44" class="box"/><text x="500" y="88">40</text>
+          <rect x="550" y="60" width="100" height="44" class="boxw" style="stroke-dasharray:5 4"/><text x="600" y="88" class="warnf" font-size="13">past end</text>
+        </g>
+        <text x="200" y="26" text-anchor="middle" class="mono acc" font-size="14">v.begin()</text><line x1="200" y1="32" x2="200" y2="58" class="lna" marker-end="url(#f2)"/>
+        <text x="600" y="26" text-anchor="middle" class="mono warnf" font-size="14">v.end()</text><line x1="600" y1="32" x2="600" y2="58" class="lnw" marker-end="url(#f3)"/>
+        <text x="400" y="136" text-anchor="middle" class="mut" font-size="13">end() is not a real element: it only tells the loop to stop. Never dereference it.</text>
+      </svg>
+      </div>
+    </div>
+    <div class="card">
+      <h3>The loop to memorise</h3>
+<pre>vector&lt;int&gt;::iterator itr;
+for (itr = v.begin(); itr != v.end(); itr++)
+    cout &lt;&lt; *itr &lt;&lt; endl;
+
+// swap vector for list: identical loop
+list&lt;int&gt;::iterator it2;
+for (it2 = L.begin(); it2 != L.end(); ++it2)
+    cout &lt;&lt; *it2;
+
+// const container → const_iterator
+void show(const list&lt;string&gt; &amp;lst) {
+    list&lt;string&gt;::const_iterator ci;
+    for (ci = lst.begin(); ci != lst.end(); ++ci)
+        cout &lt;&lt; *ci &lt;&lt; endl;
+}</pre>
+    </div>
+    <div class="card">
+      <h3>Iterator kinds</h3>
+      <div class="tbl"><table>
+        <tr><th>Kind</th><th>Can do</th><th>Containers</th></tr>
+        <tr><td>Forward</td><td><code>=</code> <code>++</code> <code>*</code> <code>==</code> <code>!=</code></td><td></td></tr>
+        <tr><td>Bidirectional</td><td>forward + <code>--</code></td><td><code>list</code>, <code>map</code></td></tr>
+        <tr><td>Random access</td><td>bidirectional + <code>+ - += -=</code>, <code>&lt; &gt; &lt;= &gt;=</code></td><td><code>vector</code>, arrays</td></tr>
+      </table></div>
+      <p class="muted">Each kind can do everything the kinds above it can. So <code>it + 3</code> and <code>it &lt; end</code> only work on vector iterators; use <code>!=</code> to stay portable.</p>
+    </div>
+  </div>
+</section>
+
+<section id="map">
+  <h2><span class="n">5</span>Walking a map</h2>
+  <div class="grid">
+    <div class="card">
+<pre>map&lt;string, int&gt; m;
+m["pear"] = 3;  m["apple"] = 5;  m["fig"] = 1;
+
+map&lt;string, int&gt;::iterator it;
+for (it = m.begin(); it != m.end(); it++)
+    cout &lt;&lt; it-&gt;first &lt;&lt; " " &lt;&lt; it-&gt;second &lt;&lt; endl;
+// apple 5
+// fig 1
+// pear 3        ← sorted by key, not insertion order</pre>
+      <p class="muted">Each element is a <code>pair</code>: <code>first</code> is the key, <code>second</code> the value. <code>(*it).first</code> is the same as <code>it-&gt;first</code>.</p>
+    </div>
+    <div class="card">
+      <h3>Word count in four lines</h3>
+<pre>map&lt;string, int&gt; freq;
+string w;
+while (cin &gt;&gt; w) freq[w]++;
+for (map&lt;string,int&gt;::iterator i = freq.begin(); i != freq.end(); i++)
+    cout &lt;&lt; i-&gt;first &lt;&lt; ": " &lt;&lt; i-&gt;second &lt;&lt; endl;</pre>
+      <p class="muted">Reading <code>m[key]</code> for a missing key <b>creates</b> it with value 0. To just test, use <code>count</code> or <code>find</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="sort">
+  <h2><span class="n">6</span>sort() and operator&lt;</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>sort(first, last)</h3>
+<pre>#include &lt;algorithm&gt;
+vector&lt;int&gt; nums = {50, 10, 40, 20, 30};
+sort(nums.begin(), nums.end());     // 10 20 30 40 50
+
+int a[5] = {3, 1, 2, 5, 4};
+sort(a, a + 5);                     // arrays too
+
+L.sort();                           // list: member function</pre>
+      <p class="muted">The range is <b>[first, last)</b>: first included, last excluded. <code>sort()</code> needs random-access iterators, so it works on vectors and arrays but not on lists or maps.</p>
+    </div>
+    <div class="card">
+      <h3>Sorting your own type</h3>
+<pre>class Record {
+public:
+    string name;
+    int number;
+};
+
+bool operator&lt;(const Record &amp;a, const Record &amp;b) {
+    return a.name &lt; b.name;     // how to order two Records
+}
+
+vector&lt;Record&gt; book;
+sort(book.begin(), book.end()); // now works, by name</pre>
+      <p class="muted">STL doesn't know how to compare your struct or class. Defining <code>operator&lt;</code> tells it; it is also needed to use the type as a map key.</p>
+    </div>
+  </div>
+</section>
+
+<section id="phone">
+  <h2><span class="n">7</span>The phone book, three ways</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Two vectors</h3>
+<pre>vector&lt;string&gt; names;
+vector&lt;int&gt; numbers;
+names.push_back(n);  numbers.push_back(x);   // add
+
+for (int i = 0; i &lt; names.size(); i++)       // search O(n)
+    if (names[i] == n) cout &lt;&lt; numbers[i];</pre>
+    </div>
+    <div class="card">
+      <h3>A map</h3>
+<pre>map&lt;string, int&gt; book;
+book[n] = x;                     // add or update
+
+if (book.count(n) &gt; 0)           // search O(log n)
+    cout &lt;&lt; book[n];</pre>
+    </div>
+    <div class="trap">
+      <h3>Module 9 traps</h3>
+      <ul>
+        <li><code>vector&lt;int&gt; v; v[0] = 1;</code> is wrong: v is empty. Use <code>push_back</code>.</li>
+        <li>No <code>L[2]</code> and no <code>sort(L.begin(), L.end())</code> on a list.</li>
+        <li><code>*v.end()</code> is undefined.</li>
+        <li>A const container needs <code>const_iterator</code>.</li>
+        <li><code>new list&lt;string&gt;()</code> gives a pointer: <code>ans-&gt;push_back(x)</code>.</li>
+        <li>Erasing while iterating: use the iterator <code>erase</code> returns.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="predict">
+  <h2><span class="n">8</span>Predict the output</h2>
+  <div class="qa">
+    <details><summary>vector&lt;int&gt; v;
+v.push_back(1); v.push_back(2); v.pop_back();
+v.push_back(3);
+cout &lt;&lt; v.size() &lt;&lt; v[1];</summary><p>23</p></details>
+    <details><summary>list&lt;int&gt; L;
+L.push_front(1); L.push_back(2); L.push_front(3);
+for (… it …) cout &lt;&lt; *it;</summary><p>312</p></details>
+    <details><summary>map&lt;string,int&gt; m;
+m["b"] = 2; m["a"] = 1; m["b"]++;
+for (… it …) cout &lt;&lt; it-&gt;first &lt;&lt; it-&gt;second;</summary><p>a1b3</p></details>
+    <details><summary>map&lt;string,int&gt; m;
+if (m["x"] == 0) cout &lt;&lt; m.size();</summary><p>1 <span>m["x"] created the key</span></p></details>
+    <details><summary>vector&lt;int&gt; v = {4, 1, 3};
+sort(v.begin(), v.begin() + 2);
+cout &lt;&lt; v[0] &lt;&lt; v[1] &lt;&lt; v[2];</summary><p>143 <span>only the first two are sorted</span></p></details>
+  </div>
+</section>
+
+</div></div>
+
+<footer class="wrap"><div class="pager" id="pager"></div><p style="margin-top:14px">Built from the Module 9 slides (STL Containers, Iterators, and Algorithms) and the STL Containers / STL Iterators notes.</p></footer>
+<script src="sheet.js"></script>
+</body>
+</html>
