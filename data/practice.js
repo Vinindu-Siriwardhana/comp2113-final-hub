@@ -888,58 +888,59 @@ void toUpper(char *s) {
 }`,
     notes: ['Loop until the null terminator.', 'Letter arithmetic: subtract <code>\'a\'</code> to get 0..25, add <code>\'A\'</code>.'],
     test: { main: R`char s[] = "Comp2113 exam!"; toUpper(s); cout << s << " " << myStrlen(s) << " " << myStrlen("");`, out: 'COMP2113 EXAM! 14 0', exact: true } },
-  { id: 'p13', m: 'm2', marks: 10, title: 'Shell script: mark all assignments',
-    q: 'The current directory contains <code>input.txt</code>, <code>correct.txt</code> and one sub-directory per student (the directory name is the student ID). Each sub-directory should contain <code>assign.cpp</code>. Write a Bash script that, for each student, prints one line: <code>ID: no submission</code>, <code>ID: compile error</code>, <code>ID: wrong</code> or <code>ID: correct</code>. A submission is correct when its output for <code>input.txt</code> is identical to <code>correct.txt</code>.',
+  { id: 'p13', m: 'm2', marks: 10, title: 'Shell script: grade report',
+    q: 'Write a Bash script <code>report.sh</code> that takes a file name as its argument. Each line of the file is <code>UID,name,score</code> (no spaces). For every line print <code>name: PASS</code> if the score is 50 or more, otherwise <code>name: FAIL</code>. Finish with <code>Passed: p of n</code>. If the file does not exist, print <code>No such file</code> to standard error and stop.',
     lang: 'sh',
     sol: `#!/bin/bash
-list="\`ls -d */\`"
-for d in $list
+if [ ! -f "$1" ]
+then
+    echo "No such file" >&2
+    exit 1
+fi
+n=0
+p=0
+for line in \`cat $1\`
 do
-    id=\${d/\\//}
-    if [ ! -e "$id/assign.cpp" ]
+    name=\`echo $line | cut -d, -f2\`
+    score=\`echo $line | cut -d, -f3\`
+    let "n = $n + 1"
+    if [ $score -ge 50 ]
     then
-        echo "$id: no submission"
+        echo "$name: PASS"
+        let "p = $p + 1"
     else
-        rm -f "$id/assign"
-        g++ "$id/assign.cpp" -o "$id/assign" 1>/dev/null 2>&1
-        if [ ! -e "$id/assign" ]
-        then
-            echo "$id: compile error"
-        else
-            "$id/assign" < input.txt > "$id/output.txt"
-            result=\`diff $id/output.txt correct.txt\`
-            if [ "$result" ]
-            then
-                echo "$id: wrong"
-            else
-                echo "$id: correct"
-            fi
-        fi
+        echo "$name: FAIL"
     fi
-done`,
-    notes: ['This is the Module 2 checkpoint pattern: loop, check file, compile, check executable, run with redirection, diff.', '<code>[ "$result" ]</code> is true when diff printed something, which means the files differ.', '<code>ls -d */</code> lists directories only, with a trailing slash that the replacement strips.'] },
+done
+echo "Passed: $p of $n"`,
+    notes: ['The lines contain no spaces, so a for loop over the output of cat visits one line at a time.', 'cut -d, -f2 takes the second comma-separated field. Numbers are compared with -ge, not &gt;=.', 'let does arithmetic. &gt;&amp;2 sends the error message to standard error.'],
+    sh: { files: { 'marks.txt': '3030111111,Amy,72\n3030222222,Ben,49\n3030333333,Cat,50\n' }, script: 'report.sh', args: 'marks.txt', out: 'Amy: PASS Ben: FAIL Cat: PASS Passed: 2 of 3' } },
   { id: 'p14', m: 'm4', marks: 10, title: 'Makefile from a description',
-    q: 'A program <code>calc</code> is built from <code>calc.cpp</code>, <code>lcm.cpp</code> and <code>gcd.cpp</code>. <code>calc.cpp</code> includes <code>lcm.h</code> and <code>gcd.h</code>. <code>lcm.cpp</code> includes <code>lcm.h</code> and <code>gcd.h</code>. <code>gcd.cpp</code> includes <code>gcd.h</code>. (a) Which files are rebuilt after editing <code>gcd.h</code>? (b) Write the Makefile using a <code>FLAGS</code> variable, the automatic variables, and a phony <code>clean</code> target.',
+    q: 'A program <code>library</code> is built from <code>library.cpp</code>, <code>book.cpp</code> and <code>member.cpp</code>. <code>library.cpp</code> includes <code>member.h</code>. <code>member.h</code> includes <code>book.h</code>. <code>book.cpp</code> includes <code>book.h</code>. <code>member.cpp</code> includes <code>member.h</code>. (a) Draw the dependency graph. (b) Which files are rebuilt after editing <code>book.h</code>, and after editing <code>member.cpp</code>? (c) Write the Makefile using a <code>FLAGS</code> variable, the automatic variables, and a phony <code>clean</code> target.',
     lang: 'make',
-    sol: `# (a) gcd.h is a dependency of all three object files, so calc.o, lcm.o,
-#     gcd.o are recompiled and calc is relinked.
+    sol: `# (a) library   -> library.o, book.o, member.o
+#     library.o -> library.cpp, member.h, book.h   (book.h comes in through member.h)
+#     book.o    -> book.cpp, book.h
+#     member.o  -> member.cpp, member.h, book.h
+# (b) book.h: all three .o files are recompiled, then library is relinked.
+#     member.cpp: only member.o is recompiled, then library is relinked.
 
 FLAGS = -pedantic-errors -std=c++11
 
-calc: calc.o lcm.o gcd.o
+library: library.o book.o member.o
 	g++ $(FLAGS) $^ -o $@
 
-calc.o: calc.cpp lcm.h gcd.h
+library.o: library.cpp member.h book.h
 	g++ $(FLAGS) -c $<
 
-lcm.o: lcm.cpp lcm.h gcd.h
+book.o: book.cpp book.h
 	g++ $(FLAGS) -c $<
 
-gcd.o: gcd.cpp gcd.h
+member.o: member.cpp member.h book.h
 	g++ $(FLAGS) -c $<
 
 clean:
-	rm -f calc calc.o lcm.o gcd.o
+	rm -f library library.o book.o member.o
 
 .PHONY: clean`,
     notes: ['One rule for the executable (first), one per object file.', '<code>$^</code> for linking (all objects), <code>$&lt;</code> for compiling (just the .cpp).'] },

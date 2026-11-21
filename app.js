@@ -32,6 +32,7 @@ Object.entries(window.DRILL || {}).forEach(([m, rows]) => {
     return Q[id] = { type: 'mcq', id, m, q: r[0], opts: r[1], a: r[2], why: r[3], code: r[4], clang };
   });
 });
+(window.CHECKPOINTS || []).forEach(cp => cp.twins.forEach(t => { Q[t.id] = Object.assign({ label: 'Twin' }, t); }));
 const ui = {};                                   // transient per-question state
 const U = id => ui[id] || (ui[id] = {});
 
@@ -59,7 +60,7 @@ function hl(code, lang) {
 const pre = (code, lang) => `<pre><code style="all:unset">${hl(code, lang || 'cpp')}</code></pre>`;
 
 /* ---------- routing ---------- */
-const TABS = ['plan', 'types', 'topics', 'cheats', 'practice', 'drill', 'papers', 'mock', 'external', 'sheet'];
+const TABS = ['plan', 'types', 'topics', 'cheats', 'practice', 'drill', 'checkpoints', 'papers', 'answers', 'mock', 'external', 'sheet'];
 let route = { tab: 'plan', args: [] };
 function parseHash() {
   const p = decodeURIComponent(location.hash.slice(1)).split(':');
@@ -131,7 +132,7 @@ function renderQ(id, num) {
     if (u.result) body += `<div class="explain ${u.result}"><b>${u.result === 'ok' ? 'Correct.' : 'Not quite.'}</b> ${u.result === 'ok' || u.revealed ? '' : 'Trace it again line by line, or show the answer.'}</div>`;
     if (u.revealed || u.result === 'ok') body += `<div class="explain"><b>Output:</b> <code>${esc(q.out)}</code><br>${q.why}</div>`;
   } else {
-    body = (q.code ? pre(q.code, q.lang === 'sh' ? 'cpp' : q.lang) : '') + (q.given ? `<p class="small muted" style="margin-top:8px">Given:</p>${pre(q.given)}` : '');
+    body = (q.code ? pre(q.code, q.codeLang || (q.lang === 'sh' ? 'cpp' : q.lang)) : '') + (q.given ? `<p class="small muted" style="margin-top:8px">Given:</p>${pre(q.given)}` : '');
     if (!u.revealed) body += `<div class="row" style="margin-top:10px"><button class="btn pri" data-act="reveal">Reveal answer</button><span class="small muted">Write yours on paper first.</span></div>`;
     else body += `<p class="small muted" style="margin-top:10px">Model answer:</p>${pre(q.ans || q.sol, q.lang)}
       ${q.why ? `<div class="explain">${q.why}</div>` : ''}${q.notes ? `<ul class="notes">${q.notes.map(n => `<li>${n}</li>`).join('')}</ul>` : ''}
@@ -290,6 +291,57 @@ function viewDrill() {
     <div class="stack">${items.length ? items.map((q, i) => renderQ(q.id, String(i + 1))).join('') : '<p class="lead">All correct in this lesson. Clear the filter to see every question.</p>'}</div>`;
 }
 
+/* ---------- tab: checkpoints ---------- */
+function viewCheckpoints() {
+  const list = window.CHECKPOINTS || [];
+  const cp = list.find(c => c.m === route.args[0]) || list[0];
+  const twinsDone = c => count(c.twins, t => S.q[t.id] === 'ok');
+  const rows = cp.items.map(it => `<tr><td><b>${esc(it.n)}</b></td><td>${it.task}</td><td>${it.skill}</td>
+    <td><details><summary>Show hint</summary>${it.hint}</details></td></tr>`).join('');
+  return `<div class="sec-head"><h2>Checkpoint exercises</h2><span class="meta">every checkpoint from Modules 0 to 10</span></div>
+    <p class="lead">The checkpoints are graded coursework (due 30 November), so this page does not give their answers. For each one it says what it asks, which exam skill it trains, and a hint. Underneath, <b>twin questions</b> test the same skills with new code and data, and those have full worked answers. Every twin program and output was compiled and run.</p>
+    <div class="chips">${list.map(c => `<button class="chip${c === cp ? ' on' : ''}" data-go="checkpoints:${c.m}">M${MOD[c.m].n}<span class="n">${twinsDone(c)}/${c.twins.length}</span></button>`).join('')}</div>
+    <div class="mod-head"><span class="num">${MOD[cp.m].n}</span><div><h2>${esc(cp.title)}</h2>
+      <p class="small muted">${cp.items.length} checkpoint${cp.items.length > 1 ? 's' : ''} · ${cp.twins.length} twin questions</p></div>
+      <button class="go" style="margin-left:auto" data-go="drill:${cp.m}">Lesson drill</button></div>
+    <section class="card cp-table"><table class="plain"><tr><th>Checkpoint</th><th>What it asks</th><th>Exam skill</th><th>Hint</th></tr>${rows}</table></section>
+    <div class="sec-head"><h2 style="font-size:1.1rem">Twin questions</h2><span class="meta">same skills, full answers</span></div>
+    <div class="stack">${cp.twins.map((t, i) => renderQ(t.id, String(i + 1))).join('')}</div>`;
+}
+
+/* ---------- tab: full answer keys ---------- */
+function viewAnswers() {
+  const p = PAPERS.find(x => x.id === route.args[0]) || PAPERS[0];
+  const K = window.KEYS || {};
+  const block = (title, html) => html ? `<div class="key-block"><h4>${title}</h4>${html}</div>` : '';
+  const item = it => {
+    const k = K[it.id] || {};
+    let h = `<div class="q-top"><span class="num">${esc(it.n)}</span>${modTag(it.m)}${it.marks ? `<span class="marks">${it.marks} marks</span>` : ''}</div><div class="q-text">${it.q}</div>`;
+    if (it.code) h += pre(it.code, it.lang === 'sh' ? 'cpp' : (it.lang || 'cpp'));
+    if (it.opts) h += '<div class="opts">' + it.opts.map((o, i) =>
+      `<div class="opt${i === it.a ? ' right' : ''}${isCodey(o) ? ' mono' : ''}"><b>${'ABCD'[i]}</b><span>${esc(o)}${k.wrong ? `<small class="why-opt">${k.wrong[i]}</small>` : ''}</span></div>`).join('') + '</div>';
+    h += `<div class="key-ans"><span>Answer</span><b>${esc(k.answer || '')}</b></div>`;
+    if (it.out) h += `<div class="key-ans"><span>Exact output</span><code>${esc(it.out)}</code></div>`;
+    if (it.ans && !k.full) h += pre(it.ans, it.lang);
+    if (k.work) h += block('Working', '<ol class="steps">' + k.work.map(w => '<li>' + w + '</li>').join('') + '</ol>');
+    else if (it.why && !k.wrong) h += block('Why', '<p>' + it.why + '</p>');
+    if (k.full) {
+      const files = k.files ? Object.entries(k.files).map(([n, c]) => `<p class="small muted">Contents of ${esc(n)}:</p>${pre(c, 'text')}`).join('') : '';
+      const out = k.out !== undefined ? `<p class="small muted">Output when run${k.outNote ? ': ' + k.outNote : ''}</p>${pre(k.out, 'text')}` : '';
+      h += block(k.out !== undefined ? 'Complete program (compiled and run)' : 'Complete answer', pre(k.full, k.lang || (k.sh || /^#!/.test(k.full) ? 'sh' : 'cpp')) + files + out);
+    }
+    if (k.sh && k.sh !== true && k.shNote) h += `<p class="small muted">${esc(k.shNote)}</p>`;
+    if (k.points) h += block('What the marker looks for', '<ul class="notes">' + k.points.map(x => '<li>' + x + '</li>').join('') + '</ul>');
+    return `<article class="card q key">${h}</article>`;
+  };
+  return `<div class="sec-head"><h2>Full answers</h2><span class="meta">every question, fully answered</span></div>
+    <div class="chips no-print">${PAPERS.map(x => `<button class="chip${x.id === p.id ? ' on' : ''}" data-go="answers:${x.id}">${esc(x.title)}</button>`).join('')}
+      <button class="btn sm" data-act="print" style="margin-left:auto">Print or save as PDF</button></div>
+    <section class="card" style="margin-bottom:14px"><b>${esc(p.title)}</b> · <span class="muted">${esc(p.meta)}</span>
+      <p class="small muted" style="margin-top:4px">Nothing is hidden on this page: every answer, the working, why each wrong option is wrong, and a complete program for every code question. Each complete program was compiled with g++ and run, and the output shown is its real output. To practise without seeing the answers, use the Past papers tab.</p></section>
+    ${p.sections.map(s => `<div class="sec-head"><h2 style="font-size:1.1rem">${esc(s.name)}</h2></div><div class="stack">${s.items.map(item).join('')}</div>`).join('')}`;
+}
+
 /* ---------- tab: past papers ---------- */
 function viewPapers() {
   const id = route.args[0] || PAPERS[0].id, p = PAPERS.find(x => x.id === id) || PAPERS[0];
@@ -432,7 +484,7 @@ function viewSheet() {
 }
 
 /* ---------- render ---------- */
-const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, cheats: viewCheats, practice: viewPractice, drill: viewDrill, papers: viewPapers, mock: viewMock, external: viewExternal, sheet: viewSheet };
+const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, cheats: viewCheats, practice: viewPractice, drill: viewDrill, checkpoints: viewCheckpoints, papers: viewPapers, answers: viewAnswers, mock: viewMock, external: viewExternal, sheet: viewSheet };
 function render() {
   $('#view').innerHTML = VIEWS[route.tab]();
   document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice' || route.tab === 'drill') el.dataset.num = String(i + 1); });

@@ -9,7 +9,7 @@ const env = Object.assign({}, process.env, { PATH: path.dirname(GXX) + path.deli
 
 const ctx = { window: {}, console }; ctx.window = ctx;
 vm.createContext(ctx);
-for (const f of ['topics.js', 'practice.js', 'papers.js', 'plan.js', ...fs.readdirSync(path.join(root, 'data', 'drill')).map(f => 'drill/' + f)])
+for (const f of ['topics.js', 'practice.js', 'papers.js', 'plan.js', 'checkpoints.js', 'answerkeys.js', ...fs.readdirSync(path.join(root, 'data', 'drill')).map(f => 'drill/' + f)])
   vm.runInContext(fs.readFileSync(path.join(root, 'data', f), 'utf8'), ctx, { filename: f });
 const W = ctx.window;
 
@@ -53,6 +53,48 @@ for (const paper of W.PAPERS) for (const s of paper.sections) for (const it of s
   if (it.test) progTest(id, it, it.test.main && !it.test.full && /^\s*y = /.test(it.ans) ? '' : it.ans);
 }
 
+// ---- shell answers (run with bash in a temp folder) ----
+const BASH = process.env.BASH_EXE || 'bash';
+function runSh(id, t, script) {
+  const dir = fs.mkdtempSync(path.join(tmp, 's-'));
+  for (const [n, c] of Object.entries(t.files || {})) fs.writeFileSync(path.join(dir, n), c);
+  let cmd = t.cmd;
+  if (t.script) { fs.writeFileSync(path.join(dir, t.script), script.split(String.fromCharCode(13)).join('') + String.fromCharCode(10)); cmd = 'bash ' + t.script + ' ' + (t.args || ''); }
+  if (!cmd) { fs.writeFileSync(path.join(dir, 'script.sh'), script.split(String.fromCharCode(13)).join('') + String.fromCharCode(10)); cmd = 'bash script.sh'; }
+  const r = spawnSync(BASH, ['-c', cmd], { cwd: dir, env, encoding: 'utf8', timeout: 10000 });
+  const got = norm(r.stdout || ''), want = norm(t.out);
+  if (got !== want) { fail++; console.log(`FAIL ${id}: expected [${want}] got [${got}] ${(r.stderr || '').slice(0, 200)}`); } else pass++;
+}
+for (const p of W.PROG) if (p.sh) runSh(p.id, p.sh, p.sol);
+
+// ---- checkpoint twins ----
+let twinN = 0;
+for (const cp of W.CHECKPOINTS || []) for (const t of cp.twins) {
+  twinN++;
+  const id = 'checkpoint ' + t.id;
+  if (!t.m || !t.id) { fail++; console.log('BAD twin ' + id); continue; }
+  if (t.type === 'mcq' && !(t.a >= 0 && t.a < t.opts.length)) { fail++; console.log('BAD answer index ' + id); }
+  if (t.type === 'trace') run(id, wrap(t.code), t.out, { stdin: t.stdin });
+  if (t.type === 'prog') progTest(id, t, t.sol);
+  if (t.sh) runSh(id, t.sh, t.ans);
+}
+
+// ---- full answer keys ----
+let keyN = 0, keyRun = 0;
+const itemIds = new Set();
+for (const p of W.PAPERS) for (const s of p.sections) for (const it of s.items) itemIds.add(p.id + '-' + it.n.replace(/\W/g, ''));
+for (const id of itemIds) if (!(W.KEYS || {})[id]) { fail++; console.log('NO KEY for ' + id); }
+for (const [id, k] of Object.entries(W.KEYS || {})) {
+  keyN++;
+  if (!itemIds.has(id)) { fail++; console.log('KEY for unknown item ' + id); }
+  if (k.full && k.out !== undefined) {
+    keyRun++;
+    if (k.sh === true) runSh('key ' + id, { out: k.out }, k.full);
+    else run('key ' + id, k.full, k.out, { c: k.c, files: k.files, stdin: k.stdin });
+  }
+  if (k.sh && k.sh !== true) runSh('key ' + id, k.sh, '');
+}
+
 // ---- lesson drills ----
 let drillN = 0;
 const okTag = new RegExp('^<[/]?(code|em|b|strong|sup|br)([ >]|$)');
@@ -74,6 +116,6 @@ for (const x of [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG]) if (!mods.has(x.m
 for (const q of W.MCQ) if (!(q.a >= 0 && q.a < q.opts.length)) { fail++; console.log('BAD answer index ' + q.id); }
 for (const s of (W.PLAN || [])) for (const t of s.tasks) if (t.go && !/^(topics|types|practice|papers|mock|external|sheet)(:|$)/.test(t.go)) { fail++; console.log('BAD plan link ' + t.go); }
 
-console.log(`\n${pass} passed, ${fail} failed  (drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
+console.log(`\n${pass} passed, ${fail} failed  (answer keys ${keyN} with ${keyRun} full programs, checkpoint twins ${twinN}, drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(fail ? 1 : 0);

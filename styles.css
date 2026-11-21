@@ -177,6 +177,29 @@ table.plain th, table.plain td { text-align: left; padding: 7px 10px; border-bot
 table.plain th { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
 .steps { margin: 6px 0 0; padding-left: 20px; } .steps li { margin: 4px 0; }
 
+/* answer keys and checkpoints */
+.key-ans { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-top: 12px; padding: 9px 12px; border-radius: 10px; background: var(--ok-bg); border-left: 3px solid var(--ok); }
+.key-ans span { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ok); }
+.key-ans b, .key-ans code { font-family: var(--mono); font-size: .9rem; overflow-wrap: anywhere; }
+.key-block { margin-top: 12px; }
+.key-block h4 { margin: 0 0 4px; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.key-block table.plain { margin: 6px 0; }
+.key-block pre { white-space: pre; }
+.key .opt { cursor: default; }
+.why-opt { display: block; color: var(--muted); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: .84rem; margin-top: 2px; }
+.cp-table td { font-size: .9rem; }
+.cp-table td:first-child { white-space: nowrap; }
+.cp-table td:last-child { min-width: 120px; }
+.cp-table summary { cursor: pointer; color: var(--a1); font-weight: 600; font-size: .85rem; }
+.cp-table details[open] summary { margin-bottom: 4px; }
+@media (max-width: 700px) {
+  .cp-table table, .cp-table tbody, .cp-table tr, .cp-table td { display: block; width: 100%; }
+  .cp-table tr:first-child { display: none; }
+  .cp-table tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .cp-table td { border: 0; padding: 2px 0; }
+  .cp-table td:first-child { white-space: normal; }
+}
+
 /* mock */
 .timer { position: sticky; top: 52px; z-index: 15; display: flex; gap: 12px; align-items: center; justify-content: space-between; background: var(--card); border: 1px solid var(--a1); border-radius: 14px; padding: 10px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
 .timer .t { font: 700 1.4rem var(--mono); font-variant-numeric: tabular-nums; }
