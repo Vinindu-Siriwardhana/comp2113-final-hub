@@ -54,7 +54,10 @@ i++ use then add   ++i add then use
 switch: no break -> falls through   do{}while(c);
 cout << fixed << setprecision(2) << x;
 setw(5) next item only   setfill('0')   left / right
-cin >> x (one word)   getline(cin, s) (whole line)`],
+cin >> x (one word)   getline(cin, s) (whole line)
+cin >> n; cin.ignore(); getline(cin, s);  (eat the '\n')
+ASCII: '0'=48  'A'=65  'a'=97   'a'-'A'=32   ' '=32
+sizeof: char 1  int 4  double 8  pointer 8 (64-bit)`],
 ['Functions and recursion', R`void f(int a)  copy     void f(int &a) changes caller
 arrays: always modifiable; pass size too
 inner { int a; } hides outer a until the }
@@ -66,6 +69,8 @@ int bs(int a[],int l,int r,int x){
   return bs(a,m+1,r,x); }
 iterative: while(l<=r){ ... r=m-1 / l=m+1 }`],
 ['Arrays and strings', R`int a[5]={1,2}; -> 1 2 0 0 0    sizeof(a)/sizeof(a[0])
+2D: int m[3][4];  void f(int m[][4], int rows)
+  (every size but the first is required) m[r][c]
 char s[]="hi"; 3 bytes, ends '\0'
 <cstring> strlen strcpy(d,s) strcat(d,s) strcmp==0
 for(i=0; s[i]!='\0'; i++)
