@@ -37,6 +37,18 @@ const XSET = Object.fromEntries((window.XSETS || []).map(s => [s.id, s]));
 (window.XSETS || []).forEach(s => s.qs.forEach(q => {
   Q[q.id] = Object.assign(q.type === 'trace' ? { q: 'Write down the exact output of this program.' } : {}, q);
 }));
+
+/* ---------- exam scope: Git, GDB and C++ classes are not examined in 2026 ---------- */
+const OUT = new Map(Object.entries(window.OUT_OF_SCOPE || {}).flatMap(([why, ids]) => ids.map(id => [id, why])));
+const OUT_NAME = { git: 'Git', gdb: 'GDB', class: 'C++ classes' };
+const live = x => S.showOut || !OUT.has(x.id);
+const hiddenNote = arr => {
+  const n = arr.filter(x => OUT.has(x.id)).length;
+  if (!n) return '';
+  return `<p class="small muted scope-note">${S.showOut ? `Showing ${n} not-examined item${n > 1 ? 's' : ''} (marked "Not examined").`
+    : `${n} item${n > 1 ? 's' : ''} on ${[...new Set(arr.filter(x => OUT.has(x.id)).map(x => OUT_NAME[OUT.get(x.id)]))].join(', ')} hidden: not examined this year.`}
+    <button class="btn sm" data-act="scope">${S.showOut ? 'Hide them' : 'Show them'}</button></p>`;
+};
 const ui = {};                                   // transient per-question state
 const U = id => ui[id] || (ui[id] = {});
 
@@ -75,15 +87,16 @@ const go = target => { location.hash = target; };
 /* ---------- progress ---------- */
 const count = (arr, ok) => arr.filter(ok).length;
 function progress() {
-  const cards = TOPICS.flatMap(t => t.cards);
+  const cards = TOPICS.flatMap(t => t.cards).filter(live);
   const tasks = PLAN.flatMap(s => s.tasks);
-  const qs = [...MCQ, ...TRACE, ...SHORT, ...PROG];
+  const mcq = MCQ.filter(live), trace = TRACE.filter(live), written = [...SHORT, ...PROG].filter(live);
+  const qs = [...mcq, ...trace, ...written];
   return {
     cards: [count(cards, c => S.m[c.id]), cards.length],
     tasks: [count(tasks, t => S.plan[t.id]), tasks.length],
-    mcq: [count(MCQ, q => S.q[q.id] === 'ok'), MCQ.length],
-    trace: [count(TRACE, q => S.q[q.id] === 'ok'), TRACE.length],
-    written: [count([...SHORT, ...PROG], q => S.q[q.id] === 'ok'), SHORT.length + PROG.length],
+    mcq: [count(mcq, q => S.q[q.id] === 'ok'), mcq.length],
+    trace: [count(trace, q => S.q[q.id] === 'ok'), trace.length],
+    written: [count(written, q => S.q[q.id] === 'ok'), written.length],
     all: [count(cards, c => S.m[c.id]) + count(qs, q => S.q[q.id] === 'ok'), cards.length + qs.length],
   };
 }
@@ -113,7 +126,7 @@ const isCodey = s => /[;{}|$=]|^\w+ -|^(wc|sort|cat|git|chmod|rm|rmdir|ls|find|g
 
 function qHead(q, num) {
   const label = num || q.label || '';
-  const kind = q.kind ? `<span class="tag exam">${esc(q.kind)}</span>` : '';
+  const kind = (q.kind ? `<span class="tag exam">${esc(q.kind)}</span>` : '') + (OUT.has(q.id) ? '<span class="tag bad">Not examined</span>' : '');
   return `<div class="q-top">${label ? `<span class="num">${esc(label)}</span>` : ''}${modTag(q.m)}${kind}${statusTag(q.id)}
     ${q.marks ? `<span class="marks">${q.marks} marks</span>` : ''}</div>
     ${q.title ? `<h3 style="font-size:1.02rem;margin-bottom:4px">${esc(q.title)}</h3>` : ''}
@@ -131,7 +144,7 @@ function renderQ(id, num) {
     if (done) body += `<div class="explain ${u.picked === q.a ? 'ok' : 'bad'}"><b>${u.picked === q.a ? 'Correct.' : 'Answer: ' + 'ABCD'[q.a] + '.'}</b> ${q.why}
       <button class="btn sm" data-act="retry" style="margin-left:8px">Try again</button></div>`;
   } else if (q.type === 'trace') {
-    body = pre(q.code) + `<div class="row"><input class="ans-in" data-in="${id}" placeholder="Type the exact output" value="${esc(u.typed || '')}" autocomplete="off" spellcheck="false">
+    body = pre(q.code, q.codeLang) + `<div class="row"><input class="ans-in" data-in="${id}" placeholder="Type the exact output" value="${esc(u.typed || '')}" autocomplete="off" spellcheck="false">
       <button class="btn pri" data-act="check">Check</button><button class="btn" data-act="reveal">Show answer</button></div>`;
     if (u.result) body += `<div class="explain ${u.result}"><b>${u.result === 'ok' ? 'Correct.' : 'Not quite.'}</b> ${u.result === 'ok' || u.revealed ? '' : 'Trace it again line by line, or show the answer.'}</div>`;
     if (u.revealed || u.result === 'ok') body += `<div class="explain"><b>Output:</b> <code>${esc(q.out)}</code><br>${q.why}</div>`;
@@ -170,7 +183,7 @@ function viewPlan() {
   const hoursLeft = PLAN.filter(s => !s.tasks.every(t => S.plan[t.id])).reduce((n, s) => n + s.hours, 0);
   const best = S.mocks.length ? Math.max(...S.mocks.map(m => m.score)) : null;
   const stat = (label, v, okBar) => `<div class="stat"><b>${v[0]} / ${v[1]}</b><span>${label}</span><div class="bar${okBar ? ' ok' : ''}"><i style="width:${pct(v)}%"></i></div></div>`;
-  let pace = `14 sessions, about ${PLAN.reduce((n, s) => n + s.hours, 0)} hours in total. Set your exam date above and each session gets a day.`;
+  let pace = `${PLAN.length} sessions, about ${PLAN.reduce((n, s) => n + s.hours, 0)} hours in total. Set your exam date above and each session gets a day.`;
   if (d !== null && d >= 1) pace = hoursLeft ? `${hoursLeft} hours of sessions left over ${d} day${d > 1 ? 's' : ''}: about ${(hoursLeft / d).toFixed(1)} hours a day.` : 'Every session is done. Keep sitting mock exams until the day.';
   let h = `<div class="sec-head"><h2>Your plan to the exam</h2><span class="meta">${p.tasks[0]} of ${p.tasks[1]} tasks done</span></div>
     <p class="lead">${pace} The order is fixed on purpose: diagnose first, then one module per session, then timed papers. Hand-write every answer before you check it, because the exam is on paper.</p>
@@ -193,9 +206,9 @@ function viewPlan() {
 
 /* ---------- tab: exam format ---------- */
 function viewTypes() {
-  const max = Math.max(...WEIGHTS.map(w => w.marks));
+  const max = Math.max(...WEIGHTS.flatMap(w => [w.marks, w.marks22]));
   const types = [
-    ['Multiple choice (Section A)', 'practice:mcq', ['Cover the options and answer in your head first.', 'For "which cannot / except" questions, test each option with a concrete value.', 'Linux questions are recall: flag letters matter (-l, -n, -r, -d, -f).', 'About 1.5 minutes each. Circle and move on if stuck.']],
+    ['Multiple choice (Section A)', 'practice:mcq', ['Cover the options and answer in your head first.', 'For "which cannot / except" questions, test each option with a concrete value.', 'Linux questions are recall: flag letters matter (-l, -n, -r, -d, -f). Put the flags on your A4 sheet.', 'About 1.5 minutes each. A wrong answer costs 1 mark: leave it blank unless you can rule out two options.']],
     ['Write down the output', 'practice:trace', ['Make a table: one column per variable, one row per line executed.', 'Draw boxes and arrows for every pointer. Label which array element each pointer is on.', 'A new { } block or a function call means a new set of variables. Mark them separately.', 'Copy spaces exactly: <code>cout &lt;&lt; a &lt;&lt; " "</code> leaves a trailing space.']],
     ['One command or pipe', 'practice:short:m1', ['Split the task sentence into steps. Each step is one command.', 'Join with <code>|</code>. Only the first command names the input file.', 'Check the delimiter flag: <code>cut -d</code>, <code>sort -t</code>.']],
     ['Single C++ statement', 'practice:short:m3', ['Try it on a small example on scratch paper (x = 1234).', 'Use <code>/ 10</code> to drop digits and <code>% 10</code> to keep them.', 'End with a semicolon. Declare the type only if the question has not.']],
@@ -204,23 +217,34 @@ function viewTypes() {
     ['Makefile', 'practice:prog:m4', ['Draw the dependency graph from the #include lines.', 'One rule for the executable (first), one per .o file.', 'Each .o depends on its source file and every header that source includes, directly or through another header.', 'Mark the tab clearly.']],
     ['Shell script', 'practice:prog:m2', ['Start with <code>#!/bin/bash</code>.', 'Spaces: none around <code>=</code>, always inside <code>[ ]</code>.', 'Close every <code>if</code> with <code>fi</code> and every <code>do</code> with <code>done</code>.', 'Quote variables in tests: <code>[ "$a" == "x" ]</code>.']],
   ];
-  return `<div class="sec-head"><h2>How the exam works</h2><span class="meta">from the 2019-20 paper</span></div>
+  return `<div class="sec-head"><h2>How the exam works</h2><span class="meta">from Dr Chim's announcement for the 2026 final</span></div>
   <div class="grid2">
     <section class="card"><table class="plain"><tr><th>Section</th><th>What</th><th>Marks</th><th>Time budget</th></tr>
-      <tr><td>A</td><td>15 multiple choice</td><td>30</td><td>25 min</td></tr>
-      <tr><td>B</td><td>8 short questions: output, one-liners, bug fixes</td><td>30</td><td>35 min</td></tr>
-      <tr><td>C</td><td>2 programming questions, two parts each</td><td>40</td><td>50 min</td></tr>
+      <tr><td>A</td><td>15 multiple choice: <b>+2 right, −1 wrong</b>, 0 blank</td><td>30</td><td>25 min</td></tr>
+      <tr><td>B</td><td>8 short questions: trace C++ / C / shell scripts, write Linux commands</td><td>30</td><td>35 min</td></tr>
+      <tr><td>C</td><td>3 long questions, 10 to 20 marks each: trace C++, implement short C++ functions, separate compilation</td><td>40</td><td>50 min</td></tr>
       <tr><td></td><td>Checking</td><td></td><td>10 min</td></tr></table>
-      <p class="small muted" style="margin-top:10px">2 hours for 100 marks is 1.2 minutes per mark. The final is 30% of the course grade.</p></section>
-    <section class="card"><h3 style="font-size:1.02rem;margin-bottom:6px">Rules to confirm on Moodle</h3>
-      <ul class="steps"><li>Both papers in your folder allow <b>one A4 sheet of notes, both sides</b>, printed or written. Use the A4 sheet tab to build yours.</li>
-      <li>The 2019-20 paper did not allow a calculator.</li><li>The 2019-20 paper was written on paper and scanned. Your exam is on 14 December. The venue is not in the course files, so check the announcement.</li>
-      <li>The sample paper uses only long questions (shell, Makefile, debugging, file I/O, linked list, STL, C array), so prepare for both styles.</li></ul></section>
+      <p class="small muted" style="margin-top:10px">2 hours for 100 marks is 1.2 minutes per mark. Section C has 3 questions this year (both past finals had 2), so do not spend more than about 20 minutes on any one of them.</p></section>
+    <section class="card"><h3 style="font-size:1.02rem;margin-bottom:6px">The rules this year</h3>
+      <ul class="steps"><li><b>Mon 14 Dec 2026, 09:30 to 11:30</b>, written exam in the Main Building: Loke Yew Hall, MB103, MB167 or MB201. Check your seat number for which room.</li>
+      <li><b>One A4 sheet of notes, both sides</b>, printed or written, and a <b>calculator</b> are allowed. Use the A4 sheet tab to build your sheet.</li>
+      <li><b>Scope: Modules 1 to 10, except Git commands, C++ classes and the GDB debugger.</b> Questions on those are hidden across the hub; structs (including struct member functions) are still examined.</li>
+      <li><b>Modules 9 (STL) and 10 (C) are only 12 marks in total, all in Sections A and B.</b> Learn to read and trace them; Section C will not ask you to write STL or C.</li>
+      <li>Dr Chim posted the "Revision Questions" set for this final: it is the paper called Revision Questions in the Past papers tab.</li>
+      <li>Questions come back: 2021-22 reused 2019-20 A5, A10, A11 and A13 almost word for word, B1 and B2 have the same shape with new numbers, and both C1s ask for an iterative and a recursive version of the same function.</li></ul></section>
   </div>
-  <div class="sec-head"><h2>Where the marks were</h2><span class="meta">2019-20 paper, marks per module out of 100</span></div>
-  <section class="card">${WEIGHTS.map(w => `<div class="wbar"><span>M${MOD[w.m].n} ${esc(MOD[w.m].title.split(/,| and /)[0])}</span>
-      <div class="bar"><i style="width:${w.marks / max * 100}%"></i></div><span class="v">${w.marks}</span><small>${esc(w.where)}</small></div>`).join('')}
-    <p class="small muted" style="margin-top:10px">Pointers, linked lists, functions and recursion carried 61 marks. Shell script, file I/O and STL scored zero that year but each has a full question in the sample paper, so none of them is safe to skip.</p></section>
+  <div class="sec-head"><h2>Section A: when to guess</h2><span class="meta">a wrong answer costs 1 mark</span></div>
+  <section class="card"><table class="plain"><tr><th>Options you can rule out</th><th>Chance a guess is right</th><th>Average marks from guessing</th><th>What to do</th></tr>
+    <tr><td>None (4 left)</td><td>1 in 4</td><td>−0.25</td><td><b>Leave it blank</b></td></tr>
+    <tr><td>One (3 left)</td><td>1 in 3</td><td>0</td><td>Break-even: answer only if you lean towards one</td></tr>
+    <tr><td>Two (2 left)</td><td>1 in 2</td><td>+0.5</td><td><b>Answer it</b></td></tr></table>
+    <p class="small muted" style="margin-top:10px">Average marks = 2 × (chance right) − 1 × (chance wrong). The mock exam marks Section A the same way.</p></section>
+  <div class="sec-head"><h2>Where the marks were</h2><span class="meta">marks per module out of 100</span></div>
+  <section class="card"><div class="wlegend small muted"><span><i class="k1"></i>2019-20</span><span><i class="k2"></i>2021-22</span></div>
+    ${WEIGHTS.map(w => `<div class="wbar"><span>M${MOD[w.m].n} ${esc(MOD[w.m].title.split(/,| and /)[0])}</span>
+      <div class="bars"><div class="bar"><i style="width:${w.marks / max * 100}%"></i></div><div class="bar b2"><i style="width:${w.marks22 / max * 100}%"></i></div></div>
+      <span class="v">${w.marks}<br>${w.marks22}</span><small>${esc(w.where)}</small></div>`).join('')}
+    <p class="small muted" style="margin-top:10px">Functions and recursion plus pointers and linked lists carried 61 marks in 2019-20 and 57 in 2021-22, and every Section C question so far comes from those two modules. Linux commands were a steady 14 marks both years. This year Section C also names separate compilation (Module 4), which past finals gave only 2 marks, so expect a long Makefile / header question. File I/O scored zero both years but has a full question in the revision set. STL and C are capped at 12 marks together this year.</p></section>
   <div class="sec-head"><h2>Question types and how to attack them</h2></div>
   <div class="grid2">${types.map(([t, g, steps]) => `<section class="card"><div class="row"><h3 style="font-size:1.02rem;flex:1">${t}</h3><button class="go" data-go="${g}">Practise</button></div>
     <ol class="steps">${steps.map(s => `<li>${s}</li>`).join('')}</ol></section>`).join('')}</div>
@@ -245,15 +269,16 @@ function viewTopics() {
     <div class="row" style="margin-bottom:6px"><button class="chip${flag === 'pp' ? ' on' : ''}" data-go="topics:${mod}:${flag === 'pp' ? '' : 'pp'}">Past-paper hits</button>
     <button class="chip${flag === 'todo' ? ' on' : ''}" data-go="topics:${mod}:${flag === 'todo' ? '' : 'todo'}">Not mastered</button>
     <input class="search" id="search" type="search" placeholder="Search notes, e.g. strcmp" value="${esc(U('search').v || '')}"></div>`;
+  h += hiddenNote(TOPICS.filter(t => term || mod === 'all' || t.id === mod).flatMap(t => t.cards));
   let shown = 0;
   TOPICS.filter(t => term || mod === 'all' || t.id === mod).forEach(t => {
-    const cards = t.cards.filter(c => (flag !== 'pp' || c.pp) && (flag !== 'todo' || !S.m[c.id])
+    const cards = t.cards.filter(c => live(c) && (flag !== 'pp' || c.pp) && (flag !== 'todo' || !S.m[c.id])
       && (!term || (c.t + ' ' + c.code + ' ' + c.pts.join(' ') + ' ' + c.trap).toLowerCase().includes(term)));
     if (!cards.length) return;
     shown += cards.length;
     h += `<div class="mod-head"><span class="num">${t.n}</span><div><h2>${esc(t.title)}</h2><p class="small muted">${esc(t.blurb)}</p></div>
       <button class="go" style="margin-left:auto" data-go="practice:mcq:${t.id}">Practise</button></div><div class="stack">` +
-      cards.map(c => `<article class="card tcard" id="c-${c.id}"><h3>${esc(c.t)}${c.pp ? `<span class="tag exam">${esc(c.pp)}</span>` : ''}
+      cards.map(c => `<article class="card tcard" id="c-${c.id}"><h3>${esc(c.t)}${c.pp ? `<span class="tag exam">${esc(c.pp)}</span>` : ''}${OUT.has(c.id) ? '<span class="tag bad">Not examined</span>' : ''}
         <button class="master${S.m[c.id] ? ' on' : ''}" data-master="${c.id}">${S.m[c.id] ? 'Mastered' : 'Mark mastered'}</button></h3>
         ${pre(c.code, c.lang)}<ul>${c.pts.map(p => `<li>${p}</li>`).join('')}</ul><div class="trap"><b>Exam trap.</b> ${c.trap}</div></article>`).join('') + '</div>';
   });
@@ -265,11 +290,12 @@ function viewTopics() {
 const KINDS = { mcq: ['Multiple choice', MCQ], trace: ['Write the output', TRACE], short: ['Short answers', SHORT], prog: ['Programming', PROG] };
 function viewPractice() {
   const [kind = 'mcq', mod = 'all', flag = ''] = route.args;
-  const k = KINDS[kind] ? kind : 'mcq', list = KINDS[k][1];
+  const k = KINDS[kind] ? kind : 'mcq', all = KINDS[k][1], list = all.filter(live);
   const items = list.filter(q => (mod === 'all' || q.m === mod) && (flag !== 'todo' || S.q[q.id] !== 'ok'));
   const mods = TOPICS.filter(t => list.some(q => q.m === t.id));
-  return `<div class="sec-head"><h2>Practice</h2><span class="meta">${MCQ.length + TRACE.length + SHORT.length + PROG.length} questions in the style of Sections A, B and C</span></div>
-    <div class="chips">${Object.entries(KINDS).map(([id, [name, arr]]) => `<button class="chip${k === id ? ' on' : ''}" data-go="practice:${id}:all:${flag}">${name}<span class="n">${count(arr, q => S.q[q.id] === 'ok')}/${arr.length}</span></button>`).join('')}</div>
+  return `<div class="sec-head"><h2>Practice</h2><span class="meta">${[...MCQ, ...TRACE, ...SHORT, ...PROG].filter(live).length} questions in the style of Sections A, B and C</span></div>
+    <div class="chips">${Object.entries(KINDS).map(([id, [name, arr]]) => `<button class="chip${k === id ? ' on' : ''}" data-go="practice:${id}:all:${flag}">${name}<span class="n">${count(arr.filter(live), q => S.q[q.id] === 'ok')}/${arr.filter(live).length}</span></button>`).join('')}</div>
+    ${hiddenNote(all.filter(q => mod === 'all' || q.m === mod))}
     <div class="chips"><button class="chip${mod === 'all' ? ' on' : ''}" data-go="practice:${k}:all:${flag}">All modules</button>
       ${mods.map(t => `<button class="chip${mod === t.id ? ' on' : ''}" data-go="practice:${k}:${t.id}:${flag}">M${t.n}</button>`).join('')}
       <button class="chip${flag === 'todo' ? ' on' : ''}" data-go="practice:${k}:${mod}:${flag === 'todo' ? '' : 'todo'}">Wrong or not done</button></div>
@@ -282,15 +308,16 @@ function viewPractice() {
 function viewDrill() {
   const mods = TOPICS.filter(t => DQ[t.id]);
   const [mod = mods[0].id, flag = ''] = route.args;
-  const list = DQ[mod] || DQ[mods[0].id];
+  const full = DQ[mod] || DQ[mods[0].id], list = full.filter(live);
   const done = count(list, q => S.q[q.id] === 'ok');
   const items = list.filter(q => flag !== 'todo' || S.q[q.id] !== 'ok');
-  const total = mods.reduce((n, t) => n + DQ[t.id].length, 0);
+  const total = mods.reduce((n, t) => n + DQ[t.id].filter(live).length, 0);
   return `<div class="sec-head"><h2>Lesson drills</h2><span class="meta">${total} detail questions written from the lecture notes</span></div>
     <p class="lead">One long quiz per lesson, covering the notes line by line, including the small facts. Work through a lesson until every question is correct, then use "Wrong or not done" to repeat the ones you missed.</p>
-    <div class="chips">${mods.map(t => `<button class="chip${mod === t.id ? ' on' : ''}" data-go="drill:${t.id}:${flag}">M${t.n}<span class="n">${count(DQ[t.id], q => S.q[q.id] === 'ok')}/${DQ[t.id].length}</span></button>`).join('')}
+    <div class="chips">${mods.map(t => `<button class="chip${mod === t.id ? ' on' : ''}" data-go="drill:${t.id}:${flag}">M${t.n}<span class="n">${count(DQ[t.id].filter(live), q => S.q[q.id] === 'ok')}/${DQ[t.id].filter(live).length}</span></button>`).join('')}
       <button class="chip${flag === 'todo' ? ' on' : ''}" data-go="drill:${mod}:${flag === 'todo' ? '' : 'todo'}">Wrong or not done</button></div>
     <div class="mod-head"><span class="num">${MOD[mod].n}</span><div><h2>${esc(MOD[mod].title)}</h2><p class="small muted">${done} of ${list.length} correct</p></div></div>
+    ${hiddenNote(full)}
     <div class="bar ok" style="margin-bottom:14px"><i style="width:${pct([done, list.length])}%"></i></div>
     <div class="stack">${items.length ? items.map((q, i) => renderQ(q.id, String(i + 1))).join('') : '<p class="lead">All correct in this lesson. Clear the filter to see every question.</p>'}</div>`;
 }
@@ -299,18 +326,18 @@ function viewDrill() {
 function viewCheckpoints() {
   const list = window.CHECKPOINTS || [];
   const cp = list.find(c => c.m === route.args[0]) || list[0];
-  const twinsDone = c => count(c.twins, t => S.q[t.id] === 'ok');
+  const twinsDone = c => count(c.twins.filter(live), t => S.q[t.id] === 'ok');
   const rows = cp.items.map(it => `<tr><td><b>${esc(it.n)}</b></td><td>${it.task}</td><td>${it.skill}</td>
     <td><details><summary>Show hint</summary>${it.hint}</details></td></tr>`).join('');
   return `<div class="sec-head"><h2>Checkpoint exercises</h2><span class="meta">every checkpoint from Modules 0 to 10</span></div>
     <p class="lead">The checkpoints are graded coursework (due 30 November), so this page does not give their answers. For each one it says what it asks, which exam skill it trains, and a hint. Underneath, <b>twin questions</b> test the same skills with new code and data, and those have full worked answers. Every twin program and output was compiled and run.</p>
-    <div class="chips">${list.map(c => `<button class="chip${c === cp ? ' on' : ''}" data-go="checkpoints:${c.m}">M${MOD[c.m].n}<span class="n">${twinsDone(c)}/${c.twins.length}</span></button>`).join('')}</div>
+    <div class="chips">${list.map(c => `<button class="chip${c === cp ? ' on' : ''}" data-go="checkpoints:${c.m}">M${MOD[c.m].n}<span class="n">${twinsDone(c)}/${c.twins.filter(live).length}</span></button>`).join('')}</div>
     <div class="mod-head"><span class="num">${MOD[cp.m].n}</span><div><h2>${esc(cp.title)}</h2>
-      <p class="small muted">${cp.items.length} checkpoint${cp.items.length > 1 ? 's' : ''} · ${cp.twins.length} twin questions</p></div>
+      <p class="small muted">${cp.items.length} checkpoint${cp.items.length > 1 ? 's' : ''} · ${cp.twins.filter(live).length} twin questions</p></div>
       <button class="go" style="margin-left:auto" data-go="drill:${cp.m}">Lesson drill</button></div>
     <section class="card cp-table"><table class="plain"><tr><th>Checkpoint</th><th>What it asks</th><th>Exam skill</th><th>Hint</th></tr>${rows}</table></section>
     <div class="sec-head"><h2 style="font-size:1.1rem">Twin questions</h2><span class="meta">same skills, full answers</span></div>
-    <div class="stack">${cp.twins.map((t, i) => renderQ(t.id, String(i + 1))).join('')}</div>`;
+    ${hiddenNote(cp.twins)}<div class="stack">${cp.twins.filter(live).map((t, i) => renderQ(t.id, String(i + 1))).join('')}</div>`;
 }
 
 /* ---------- tab: full answer keys ---------- */
@@ -321,7 +348,7 @@ function viewAnswers() {
   const item = it => {
     const k = K[it.id] || {};
     let h = `<div class="q-top"><span class="num">${esc(it.n)}</span>${modTag(it.m)}${it.marks ? `<span class="marks">${it.marks} marks</span>` : ''}</div><div class="q-text">${it.q}</div>`;
-    if (it.code) h += pre(it.code, it.lang === 'sh' ? 'cpp' : (it.lang || 'cpp'));
+    if (it.code) h += pre(it.code, it.codeLang || (it.lang === 'sh' ? 'cpp' : (it.lang || 'cpp')));
     if (it.opts) h += '<div class="opts">' + it.opts.map((o, i) =>
       `<div class="opt${i === it.a ? ' right' : ''}${isCodey(o) ? ' mono' : ''}"><b>${'ABCD'[i]}</b><span>${esc(o)}${k.wrong ? `<small class="why-opt">${k.wrong[i]}</small>` : ''}</span></div>`).join('') + '</div>';
     h += `<div class="key-ans"><span>Answer</span><b>${esc(k.answer || '')}</b></div>`;
@@ -334,7 +361,8 @@ function viewAnswers() {
       const out = k.out !== undefined ? `<p class="small muted">Output when run${k.outNote ? ': ' + k.outNote : ''}</p>${pre(k.out, 'text')}` : '';
       h += block(k.out !== undefined ? 'Complete program (compiled and run)' : 'Complete answer', pre(k.full, k.lang || (k.sh || /^#!/.test(k.full) ? 'sh' : 'cpp')) + files + out);
     }
-    if (k.sh && k.sh !== true && k.shNote) h += `<p class="small muted">${esc(k.shNote)}</p>`;
+    if (k.sh && k.sh !== true) h += block('Checked by running it in Bash', (k.shNote ? `<p class="small muted">${esc(k.shNote)}</p>` : '') +
+      pre(k.sh.cmd.split('; ').map(c => '$ ' + c).join('\n'), 'text') + `<p class="small muted">Output</p>` + pre(k.sh.out, 'text'));
     if (k.points) h += block('What the marker looks for', '<ul class="notes">' + k.points.map(x => '<li>' + x + '</li>').join('') + '</ul>');
     return `<article class="card q key">${h}</article>`;
   };
@@ -359,24 +387,34 @@ function viewPapers() {
 /* ---------- tab: mock exam ---------- */
 let M = null, tick = null;
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+/* Built to the 2026 format: never uses not-examined items; Modules 9 and 10 only in A and B
+   (about 12 marks together); Section C = 3 long questions (C1 two parts, C2 separate compilation, C3 C++). */
+const STL_C = q => q.m === 'm9' || q.m === 'm10';
 function buildMock() {
-  const quota = { m1: 3, m2: 1, m3: 2, m4: 1, m5: 1, m6: 1, m7: 1, m8: 2, m9: 1, m10: 2 };
-  const a = shuffle(Object.entries(quota).flatMap(([m, n]) => shuffle([...MCQ, ...(DQ[m] || [])].filter(q => q.m === m)).slice(0, n)));
-  const tr = shuffle(TRACE), tPick = [...tr.filter(q => q.m === 'm8').slice(0, 2), ...tr.filter(q => q.m !== 'm8').slice(0, 3)];
-  const sh = shuffle(SHORT), sPick = [sh.find(q => q.m === 'm1'), ...sh.filter(q => q.m !== 'm1').slice(0, 2)];
-  const pr = shuffle(PROG), pPick = [...pr.filter(q => q.m === 'm8').slice(0, 2), ...pr.filter(q => q.m !== 'm8').slice(0, 2)];
+  const ok = q => q && !OUT.has(q.id);
+  const quota = { m1: 3, m2: 1, m3: 1, m4: 1, m5: 1, m6: 1, m7: 1, m8: 2, m9: 2, m10: 2 };
+  const a = shuffle(Object.entries(quota).flatMap(([m, n]) => shuffle([...MCQ, ...(DQ[m] || [])].filter(q => q.m === m && ok(q))).slice(0, n)));
+  const tr = shuffle(TRACE.filter(ok)), cpp = tr.filter(q => !STL_C(q));
+  const tPick = [...cpp.filter(q => q.m === 'm8').slice(0, 2), ...cpp.filter(q => q.m !== 'm8').slice(0, 2), tr.find(STL_C)];
+  const sh = shuffle(SHORT.filter(q => ok(q) && !STL_C(q)));
+  const sPick = [sh.find(q => q.m === 'm1'), sh.find(q => q.m === 'm2'), sh.find(q => !['m1', 'm2'].includes(q.m))];
+  const pr = shuffle(PROG.filter(q => ok(q) && !STL_C(q) && q.m !== 'm2' && q.m !== 'm4'));
+  const c1 = pr.filter(q => q.m === 'm8').slice(0, 2);
+  const c2 = shuffle([...PROG.filter(q => q.m === 'm4'), Q['sample-Q2b']].filter(ok))[0];
+  const c3 = pr.find(q => !c1.includes(q));
   const bMarks = [3, 3, 4, 4, 4, 4, 4, 4];
   const qs = [];
   a.forEach((q, i) => qs.push({ id: q.id, sec: 'A', label: 'A' + (i + 1), marks: 2 }));
-  shuffle([...tPick, ...sPick]).forEach((q, i) => qs.push({ id: q.id, sec: 'B', label: 'B' + (i + 1), marks: bMarks[i] }));
-  pPick.forEach((q, i) => qs.push({ id: q.id, sec: 'C', label: 'C' + (1 + (i >> 1)) + '(' + 'ab'[i & 1] + ')', marks: 10 }));
+  shuffle([...tPick, ...sPick].filter(Boolean)).forEach((q, i) => qs.push({ id: q.id, sec: 'B', label: 'B' + (i + 1), marks: bMarks[i] }));
+  [[c1[0], 'C1(a)'], [c1[1], 'C1(b)'], [c2, 'C2'], [c3, 'C3']].forEach(([q, label]) => q && qs.push({ id: q.id, sec: 'C', label, marks: 10 }));
   M = { qs, ans: {}, self: {}, end: Date.now() + 120 * 60000, submitted: false, saved: false };
 }
+const mcqMarks = x => M.ans[x.id] == null ? 0 : M.ans[x.id] === Q[x.id].a ? x.marks : -1;   // +2 right, −1 wrong, 0 blank
 function mockScore() {
   let auto = 0, self = 0, selfMax = 0;
   M.qs.forEach(x => {
     const q = Q[x.id];
-    if (q.type === 'mcq') auto += M.ans[x.id] === q.a ? x.marks : 0;
+    if (q.type === 'mcq') auto += mcqMarks(x);
     else if (q.type === 'trace') auto += norm(M.ans[x.id] || '') === norm(q.out) ? x.marks : 0;
     else { self += Math.min(x.marks, Math.max(0, +M.self[x.id] || 0)); selfMax += x.marks; }
   });
@@ -391,7 +429,7 @@ function mockQ(x) {
       const cls = sub ? (i === q.a ? ' right' : i === a ? ' wrong' : '') : (i === a ? ' sel' : '');
       return `<button class="opt${isCodey(o) ? ' mono' : ''}${cls}" data-mpick="${x.id}" data-i="${i}" ${sub ? 'disabled' : ''}><b>${'ABCD'[i]}</b><span>${esc(o)}</span></button>`;
     }).join('') + '</div>';
-    if (sub) body += `<div class="explain ${a === q.a ? 'ok' : 'bad'}"><b>${a === q.a ? 'Correct.' : a == null ? 'Not answered. Answer: ' + 'ABCD'[q.a] + '.' : 'Answer: ' + 'ABCD'[q.a] + '.'}</b> ${q.why}</div>`;
+    if (sub) body += `<div class="explain ${a === q.a ? 'ok' : 'bad'}"><b>${a === q.a ? 'Correct, +2.' : a == null ? 'Left blank, 0. Answer: ' + 'ABCD'[q.a] + '.' : 'Wrong, −1. Answer: ' + 'ABCD'[q.a] + '.'}</b> ${q.why}</div>`;
   } else if (q.type === 'trace') {
     body += pre(q.code) + `<input class="ans-in" style="width:100%" data-min="${x.id}" placeholder="Output" value="${esc(a || '')}" ${sub ? 'disabled' : ''} autocomplete="off" spellcheck="false">`;
     if (sub) { const ok = norm(a || '') === norm(q.out); body += `<div class="explain ${ok ? 'ok' : 'bad'}"><b>${ok ? 'Correct.' : 'Expected:'}</b> ${ok ? '' : `<code>${esc(q.out)}</code><br>`}${q.why}</div>`; }
@@ -406,8 +444,8 @@ function mockQ(x) {
 function viewMock() {
   if (!M) {
     return `<div class="sec-head"><h2>Mock exam</h2><span class="meta">2 hours · 100 marks</span></div>
-      <p class="lead">A fresh paper in the real format each time: 15 multiple choice (30), 8 short questions (30) and 2 two-part programming questions (40), drawn from the practice bank. Multiple choice and output questions are marked automatically. You mark the written answers against the model answers.</p>
-      <section class="card"><ul class="steps"><li>Clear your desk. Only your A4 sheet, pens and paper.</li><li>Hand-write Sections B and C, as in the real exam.</li><li>Do not pause the clock.</li></ul>
+      <p class="lead">A fresh paper in this year's format each time: 15 multiple choice (30), 8 short questions (30) and 3 long questions (40: C1 in two parts, C2 on separate compilation, C3 a C++ function), drawn from the practice bank. Git, GDB and C++ class questions never appear, and STL and C appear only in Sections A and B. Multiple choice is marked +2 right, −1 wrong, 0 blank, like the real paper. Output questions are marked automatically. You mark the written answers against the model answers.</p>
+      <section class="card"><ul class="steps"><li>Clear your desk. Only your A4 sheet, a calculator, pens and paper.</li><li>Hand-write Sections B and C, as in the real exam.</li><li>Do not pause the clock.</li></ul>
         <div class="row" style="margin-top:12px"><button class="btn pri" data-act="mock-start">Start the 2-hour mock</button></div></section>
       ${S.mocks.length ? `<div class="sec-head"><h2 style="font-size:1.1rem">Your results</h2></div><section class="card"><table class="plain"><tr><th>Date</th><th>Score</th><th>A</th><th>B + C</th></tr>
         ${S.mocks.slice().reverse().map(m => `<tr><td>${esc(m.d)}</td><td><b>${m.score}</b> / 100</td><td>${m.a} / 30</td><td>${m.score - m.a} / 70</td></tr>`).join('')}</table></section>` : ''}`;
@@ -424,7 +462,7 @@ function viewMock() {
   return `<div class="sec-head"><h2>Mock exam</h2><span class="meta">${M.submitted ? 'Marking' : 'In progress'}</span></div>${top}
     <div class="sec-head"><h2 style="font-size:1.1rem">Section A · Multiple choice (30%)</h2></div><div class="stack">${sec('A')}</div>
     <div class="sec-head"><h2 style="font-size:1.1rem">Section B · Short questions (30%)</h2></div><div class="stack">${sec('B')}</div>
-    <div class="sec-head"><h2 style="font-size:1.1rem">Section C · Programming questions (40%)</h2></div><div class="stack">${sec('C')}</div>
+    <div class="sec-head"><h2 style="font-size:1.1rem">Section C · Long questions (40%)</h2></div><div class="stack">${sec('C')}</div>
     ${M.submitted ? '' : '<div class="row" style="margin-top:16px"><button class="btn pri" data-act="mock-submit">Submit and mark</button></div>'}`;
 }
 function submitMock() {
@@ -483,15 +521,15 @@ function viewExternal() {
 
 /* ---------- tab: visual cheat sheets ---------- */
 const CHEATS = [
-  { f: 'm1-2', m: 'M1–2', t: 'Linux, Shell Script & Git', d: 'Commands, paths, ls -l anatomy, redirection and pipes, grep regex, Bash variables, quoting, if/for, Git workflow, branching and remotes.', x: 'chmod toggler · grep -E tester' },
+  { f: 'm1-2', m: 'M1–2', t: 'Linux, Shell Script & Git', d: 'Commands, paths, ls -l anatomy, redirection and pipes, grep regex, Bash variables, quoting, if/for. (The Git part is not examined this year.)', x: 'chmod toggler · grep -E tester' },
   { f: 'm3', m: 'M3', t: 'C++ Basics', d: 'Python vs C++, types and sizes, precedence ladder, ++ prefix/postfix, integer division, conversions, switch, dangling else, loop flow.', x: '12 predict-the-output cards' },
   { f: 'm4', m: 'M4', t: 'Makefile & Separate Compilation', d: 'Header files and guards, the four compilation stages, rule anatomy, how make decides, $@ $^ $<, .PHONY, the exam recipe.', x: 'clickable "what gets rebuilt?" graph' },
   { f: 'm5', m: 'M5', t: 'Functions', d: 'Function anatomy, prototypes, library functions, pass by value vs reference (diagram), returning two values, block scope and shadowing.', x: 'predict-the-output cards' },
   { f: 'm6', m: 'M6', t: 'Arrays & Strings', d: 'Array memory, passing arrays, linear search, selection sort pass by pass, 2D grids, cctype, C-strings and the string class.', x: 'string-method lab' },
-  { f: 'm7', m: 'M7', t: 'Structs, File I/O & Recursion', d: 'Structs and classes, the open/check/loop/close skeleton, istringstream, iomanip with visible spaces, factorial stack and fib call tree.', x: 'predict-the-output cards' },
+  { f: 'm7', m: 'M7', t: 'Structs, File I/O & Recursion', d: 'Structs (classes are not examined this year), the open/check/loop/close skeleton, istringstream, iomanip with visible spaces, factorial stack and fib call tree.', x: 'predict-the-output cards' },
   { f: 'm8', m: 'M8', t: 'Pointers, Dynamic Memory & Linked Lists', d: 'Address diagrams, & and *, pointer arithmetic, stack vs heap, leaks and dangling pointers, growing arrays, every linked-list operation.', x: 'linked-list playground' },
   { f: 'm9', m: 'M9', t: 'Standard Template Library', d: 'vector, list and map side by side, cost table, begin()/end(), iterator kinds, map pairs, sort() and operator<.', x: 'predict-the-output cards' },
-  { f: 'm10', m: 'M10', t: 'C Programming & GDB', d: 'C vs C++ table, printf/scanf specifiers and widths, string.h, pointer swaps, malloc/free, typedef, GDB commands and a segfault hunt.', x: 'predict-the-output cards' },
+  { f: 'm10', m: 'M10', t: 'C Programming & GDB', d: 'C vs C++ table, printf/scanf specifiers and widths, string.h, pointer swaps, malloc/free, typedef. (The GDB part is not examined this year.)', x: 'predict-the-output cards' },
 ];
 function viewCheats() {
   return `<div class="sec-head"><h2>Visual cheat sheets</h2><span class="meta">one page per module</span></div>
@@ -503,7 +541,7 @@ function viewCheats() {
 /* ---------- tab: A4 sheet ---------- */
 function viewSheet() {
   return `<div class="no-print"><div class="sec-head"><h2>Your A4 note sheet</h2><span class="meta">prints on one sheet, both sides</span></div>
-    <p class="lead">Past papers allowed one double-sided A4 sheet of notes. This is a starting draft covering every module. A sheet you write yourself from your own mistakes works better, so treat this as the base and add to it. Confirm on Moodle that the sheet is allowed this year.</p>
+    <p class="lead">Confirmed for this year: one A4 sheet of notes, printed or written on both sides. This is a starting draft covering every examined topic (Git and GDB are left out because they are not examined). A sheet you write yourself from your own mistakes works better, so treat this as the base and add to it.</p>
     <div class="row" style="margin-bottom:14px"><button class="btn pri" data-act="print">Print or save as PDF</button><span class="small muted">In the print dialog choose A4, both sides, and margins "Default" or "Minimum".</span></div></div>
     <div class="sheet">${SHEET}</div>`;
 }
@@ -530,10 +568,11 @@ document.addEventListener('click', e => {
   if (t.id === 'resetBtn') { if (confirm('Erase all saved progress on this browser?')) { const th = S.theme; S = { m: {}, q: {}, plan: {}, ext: {}, date: EXAM, theme: th, mocks: [] }; save(); render(); } return; }
   const act = t.dataset.act; if (!act) return;
   if (act === 'print') return window.print();
+  if (act === 'scope') { S.showOut = !S.showOut; save(); const y = window.scrollY; render(); return window.scrollTo(0, y); }
   if (act === 'mock-start') { buildMock(); render(); return window.scrollTo(0, 0); }
   if (act === 'mock-submit') { if (confirm('Submit and see your marks?')) submitMock(); return; }
   if (act === 'mock-new') { M = null; return render(); }
-  if (act === 'mock-save') { if (M.saved) return; const sc = mockScore(); const a = M.qs.filter(x => x.sec === 'A').reduce((n, x) => n + (M.ans[x.id] === Q[x.id].a ? 2 : 0), 0);
+  if (act === 'mock-save') { if (M.saved) return; const sc = mockScore(); const a = M.qs.filter(x => x.sec === 'A').reduce((n, x) => n + mcqMarks(x), 0);
     S.mocks.push({ d: new Date().toLocaleDateString(), score: sc.total, a }); M.saved = true; save(); t.textContent = 'Saved'; return; }
   const card = t.closest('.q[data-q]'); if (!card) return;
   const id = card.dataset.q, q = Q[id], u = U(id);

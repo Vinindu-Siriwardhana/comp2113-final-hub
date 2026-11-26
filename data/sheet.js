@@ -32,8 +32,10 @@ num: -eq -ne -lt -le -gt -ge   str: == != \\> \\<
 file: -e exists -f file -d dir -s size>0 -r -w -x
 for f in $list; do ... done    for i in {0..100..3}
 g++ a.cpp -o a 2> err.txt ; if [ -e a ] ...`],
-['Git', `init | clone url | status | add f | commit -m "m" | log
-diff | branch b | checkout b | merge b | push | pull`],
+['Separate compilation', `f.h = declarations + guard; f.cpp = definitions
+#include "f.h" in f.cpp AND in every file that calls it
+header changed -> rebuild every .o whose .cpp includes it
+  (directly or through another .h), then relink`],
 ['Makefile', `prog: main.o util.o
 <TAB>g++ $^ -o $@
 main.o: main.cpp util.h
@@ -44,7 +46,7 @@ clean:
 $@ target  $^ all deps  $< first dep  $(VAR)
 .o depends on its .cpp + every header it includes
 stages: preprocess -> compile -> assemble -> link
-g++ -c f.cpp (object only)   -o name   -g (gdb)
+g++ -c f.cpp (object only)   -o name
 #ifndef X_H / #define X_H / ... / #endif`],
 ['C++ basics', R`7/2 = 3   7/2.0 = 3.5   7%3 = 1   (int)3.9 = 3
 x/10 drops last digit   x%10 keeps last digit
@@ -67,7 +69,8 @@ int bs(int a[],int l,int r,int x){
   if(a[m]==x) return m;
   if(x<a[m]) return bs(a,l,m-1,x);
   return bs(a,m+1,r,x); }
-iterative: while(l<=r){ ... r=m-1 / l=m+1 }`],
+iterative: while(l<=r){ ... r=m-1 / l=m+1 }
+rand()%(hi-lo+1)+lo -> [lo,hi]   srand(time(0)) once`],
 ['Arrays and strings', R`int a[5]={1,2}; -> 1 2 0 0 0    sizeof(a)/sizeof(a[0])
 2D: int m[3][4];  void f(int m[][4], int rows)
   (every size but the first is required) m[r][c]
@@ -91,7 +94,7 @@ fin.close();
 ofstream fout("o.txt");  ofstream f("o.txt", ios::app);
 istringstream iss(line); iss >> a >> b;
 never: while(!fin.eof())
-class: private by default; struct: public`],
+struct param by value = copy; by & = changes caller`],
 ['Pointers and memory', R`int *p=&n;  *p value   &n address   int *a,*b;
 p[i] == *(p+i)   &t[3] == t+3   last = p+SIZE-1
 *p++ value then move   (*p)++ add to value
@@ -124,16 +127,16 @@ for (vector<int>::iterator it=v.begin();
      it!=v.end(); it++) cout << *it;
 const container -> const_iterator
 new list<string>() -> ans->push_back(x)`],
-['C and GDB', R`#include <stdio.h> <stdlib.h> <string.h>
+['C', R`#include <stdio.h> <stdlib.h> <string.h>
 scanf("%d",&a); scanf("%lf",&d); scanf("%s",s);
 printf("%d %.2f %c %s\n", a, d, c, s);  %5d  %-5d
 int *p=(int*)malloc(sizeof(int)*n);
 if(p==NULL) exit(EXIT_FAILURE);   free(p);
 typedef struct node{int v; struct node *next;} Node;
 no cin/cout/string/new/&refs in C;  gcc f.c -o f
-g++ -g f.cpp -o f ; gdb f
-r run  b 8 break  n next  p var  l list  q quit`],
-['Before handing in', `empty list? one node? base case? return on every path?
+char s[20]; scanf("%s", s);  (no & for arrays)`],
+['Before handing in', `MCQ: +2 / -1 / blank 0 -> guess only if 2 ruled out
+empty list? one node? base case? return on every path?
 & on changed params and scanf?  ; after struct }
 int division?  = vs ==?  i < n not i <= n?
 exact spaces in output?  delete [] for arrays?`],

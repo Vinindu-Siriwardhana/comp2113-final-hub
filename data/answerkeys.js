@@ -9,6 +9,13 @@
 (function () {
 const R = String.raw;
 
+/* The model answer of a paper item (papers.js loads first), so the tested script is the shown one. */
+const SCRIPT = id => {
+  for (const p of window.PAPERS) for (const s of p.sections) for (const it of s.items)
+    if (p.id + '-' + it.n.replace(/\W/g, '') === id) return it.ans;
+  throw new Error('No paper item ' + id);
+};
+
 const MASK_FULL = (deliverBody, extra, mainBody) => R`#include <iostream>
 #include <string>
 using namespace std;
@@ -445,5 +452,371 @@ int main() {
     printf("| %d %d\n", b[0], b[1]);
     return 0;
 }`, c: true, out: '5 4 3 2 1 | 8 7' },
+
+/* =================== 2021-22 Section A =================== */
+'y2122-A1': { answer: 'A. mv 1.txt 2.txt', wrong: ['Correct. mv source destination renames when both are in the same folder.', 'The wrong way round: this renames 2.txt to 1.txt.', 'rn is not a Linux command.', 'rn is not a Linux command.'] },
+'y2122-A2': { answer: 'C. man less', wrong: ['help describes Bash built-ins only, and less is not one.', 'Not a command.', 'Correct. man shows the manual page with every option.', 'Wrong, because C works.'] },
+'y2122-A3': { answer: 'A. wc -w', wrong: ['Correct. -w prints the word count only (-l lines, -c bytes).', 'Not a Linux command.', 'Not a Linux command.', 'Plain wc prints lines, words <em>and</em> bytes, not only words.'] },
+'y2122-A4': { answer: 'B', work: ['The first cat writes file1 into the pipe.', 'The second cat reads the pipe and writes it out; <code>&gt;&gt; file2</code> sends that output to the end of file2 instead of the screen.'],
+  wrong: ['Nothing reaches the screen: the only output is redirected into file2.', 'Correct.', 'file2 keeps whatever it had before, so the two files are only equal if file2 started empty.', 'It is valid: a pipe followed by an append redirection.'],
+  sh: { files: { file1: 'line one\n', file2: 'old\n' }, cmd: 'cat file1 | cat >> file2; echo ---; cat file2', out: '--- old line one' }, shNote: 'Run with file1 = "line one" and file2 = "old": nothing is printed before the ---, and file2 ends up with both lines.' },
+'y2122-A5': { answer: 'D. None of the above', work: ['Numeric and reverse is <code>sort -n -r</code>, also written <code>sort -nr</code>. None of the options has -n.'],
+  wrong: ['Plain sort is alphabetical, so 10 comes before 9.', '-k picks the column (key) to sort on. On its own it also needs a column number.', '-r reverses, but -k does not make the sort numeric.', 'Correct.'] },
+'y2122-A6': { answer: 'C. // return (0);', wrong: ['# starts a pre-processor directive in C/C++, so this does not compile.', 'Triple quotes are Python.', 'Correct. // comments out the rest of the line.', 'HTML comment syntax, and it is not even closed properly.'] },
+'y2122-A7': { answer: 'B', work: ['A rule like <code>clean: rm -f *.o prog</code> has a target that is not a file. If a file called clean ever appears, make thinks the target is up to date and does nothing.', '<code>.PHONY: clean</code> tells make clean is just a name for commands, so it always runs.'],
+  wrong: ['The opposite: phony targets are not files.', 'Correct.', 'make has no "optional target" feature. (Prefixing a command with - ignores its errors, which is a different thing.)', 'Wrong, because B is right.'] },
+'y2122-A8': { answer: 'B. strlen()', wrong: ['len() is Python.', 'Correct: from string.h.', 'length() is a member of the C++ string class, which C does not have.', 'Not a standard function.'] },
+'y2122-A9': { answer: 'B. 1', work: ['x = 2, y = 4, z = 8.', '&& is done before ||: <code>x != 2 &amp;&amp; y &gt; 2</code> = false &amp;&amp; true = false.', 'The whole condition is <code>y == 2 || false || z &lt; 2</code> = false || false || false = false.', 'So the else runs: y + z % x − 3. % comes before + and −: 8 % 2 = 0, so 4 + 0 − 3 = <b>1</b>.'],
+  wrong: ['9 is x + y % z + 3 = 2 + 4 + 3, the if branch, which does not run.', 'Correct.', 'Neither branch gives 3: the if branch gives 9 and the else branch gives 1.', '−1 would need z % x to be −2, but 8 % 2 is 0.'],
+  full: R`#include <iostream>
+using namespace std;
+
+void f() {
+    int x = 2, y = 4, z = 8;
+    if (y == 2 || x != 2 && y > 2 || z < 2)
+       cout << x + y % z + 3;
+    else
+       cout << y + z % x - 3;
+}
+
+int main() {
+    f();
+    return 0;
+}`, out: '1' },
+'y2122-A10': { answer: 'A. (-rand()) % 21 + 10', work: ['[-10, 10] contains 21 integers, so the expression needs % 21 somewhere.', 'rand() is 0 or more, so −rand() is 0 or less. In C++ the result of % takes the sign of the left operand, so <code>(-rand()) % 21</code> is in [−20, 0].', 'Adding 10 shifts that to [−10, 10]. Every value can occur.', 'The usual way to write it is <code>rand() % 21 - 10</code>, which gives the same range.'],
+  wrong: ['Correct.', 'rand() * 20 is a huge number (and can overflow). It is not a range trick.', 'rand() % 20 is 0 to 19, so this gives [−10, 9]: 10 is never produced.', 'A huge negative number, not in the range.'],
+  full: R`#include <iostream>
+#include <cstdlib>
+using namespace std;
+
+int main() {
+    int lo = 100, hi = -100;
+    int r[] = { 0, 1, 20, 21, 22, RAND_MAX };      // some possible rand() values
+    for (int i = 0; i < 6; i++) {
+        int v = (-r[i]) % 21 + 10;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+    }
+    cout << lo << " " << hi << endl;
+    return 0;
+}`, out: '-10 10', outNote: 'rand() = 0 gives 10 and rand() = 20 gives −10: both ends of the range are reached.' },
+'y2122-A11': { answer: 'D. None of above', work: ['The fourth element is a[3].', 'Its address is <code>&amp;a[3]</code>, <code>a + 3</code> or <code>aPtr + 3</code>. None of these is an option.'],
+  wrong: ['*(aPtr + 3) is the <em>value</em> of the fourth element.', 'aPtr[3] is also the value of the fourth element.', 'a[3] is an int, and an int cannot be dereferenced: compile error.', 'Correct.'] },
+'y2122-A12': { answer: 'C', work: ['In a declaration the * belongs to the name right after it, so only a is a pointer; b is a plain char.', 'c[10] is an array of 10 chars. Its name is used as a pointer to its first char, which is how option C describes it.', 'To make b a pointer too: <code>char *a, *b, c[10];</code>'],
+  wrong: ['b is not a pointer.', 'b is not a pointer, and c is not a pointer to a pointer.', 'Correct (the intended answer).', 'C matches; strictly, c is an array of 10 chars rather than a pointer variable, but that is the reading the question intends.'] },
+'y2122-A13': { answer: 'C', work: ['A: ++i increments first and gives the new value. True.', 'B: malloc reserves heap memory in C, like new in C++. True.', 'C: swapped. C uses the <b>function</b> <code>free()</code>; C++ uses the <b>operator</b> <code>delete</code>. Not true.', 'D: namespaces are a C++ feature. True.'],
+  wrong: ['True, so not the answer.', 'True, so not the answer.', 'Correct: this statement is false.', 'True, so not the answer.'] },
+'y2122-A14': { answer: 'B', wrong: ['Compiles. Dereferencing a garbage address fails (or silently reads junk) at run time.', 'Correct: the compiler rejects * on something that is not a pointer.', 'Compiles. Dereferencing NULL crashes at run time.', 'Wrong, because B is a compile-time error.'] },
+'y2122-A15': { answer: 'B', work: ['vector: push_back, pop_back. No push_front.', 'list: push_back, push_front, pop_back, pop_front.', 'map: <code>m[key] = value</code> or <code>m.insert(...)</code>. No push functions.'],
+  wrong: ['vector has no push_front.', 'Correct.', 'map has neither.', 'Only B is true.'] },
+
+/* =================== 2021-22 Section B =================== */
+'y2122-B1': { answer: '264', work: [
+  'Start: x = 4, y = 9, z = 4.',
+  '<code>z++ / 3</code> uses the old z: 4 / 3 = 1. So <code>z++ / 3 == 0</code> is false, and z becomes 5.',
+  '&& stops at the first false, so the other two tests are not evaluated and x += 1 is skipped.',
+  'y += x / 2 → y = 9 + 2 = 11.',
+  '<code>++z</code> makes z 6 before it is used. x * y * z = 4 × 11 × 6 = <b>264</b>.'],
+  points: ['Post-increment: the test uses 4, but z is 5 afterwards.', 'Pre-increment in the cout: 6, not 5.', 'Short-circuit &&.'] },
+'y2122-B2': { answer: '36 4 36 25 4 25', work: [
+  'f takes <code>int &amp;a</code>: whatever a main passes is changed directly.',
+  'main\'s block declares an inner a = 6 and calls f on it. a = 6 × 6 = 36. f\'s block prints <b>36</b>, then declares its own a = 4 and prints <b>4</b>.',
+  'Back in main\'s block, the inner a is now 36: prints <b>36</b>. The block ends.',
+  'f(a) on the outer a = 5: 25. Prints <b>25</b>, then <b>4</b>.',
+  'main prints the outer a, now <b>25</b>.'],
+  points: ['Reference parameter changes the caller\'s variable.', 'The cout before <code>int a = 4;</code> still sees the parameter.', 'Inner block variables shadow outer ones.'] },
+'y2122-B3': { answer: '100 200 / 100 200 / 200 100 (three lines)', work: [
+  'The three statements a = a + b; b = a − b; a = a − b swap a and b without a temporary: with 200 and 100, a = 300, b = 200, a = 100.',
+  'g(a, b) takes references, so main\'s a and b really swap: <b>100 200</b>.',
+  'f(b, a) takes copies. It swaps its copies and they vanish: <b>100 200</b>.',
+  'g(b, a) swaps main\'s b and a back: <b>200 100</b>.'],
+  points: ['Three separate lines.', 'Pass by value (f) changes nothing.'] },
+'y2122-B4': { answer: 'hello and HKU, on two lines', work: ['$1 and $2 are the first and second command-line arguments.', 'Each echo ends with a newline, so the output is two lines.'],
+  sh: { files: { 'run.sh': '#!/bin/bash\n\necho $1\necho $2\n' }, cmd: 'bash run.sh hello HKU', out: 'hello\nHKU' }, points: ['Two separate lines, no $ signs.'] },
+'y2122-B5': { answer: 'Computer, Discrete, Introduction, Object-oriented (one per line)', work: [
+  'grep "COMP2" keeps COMP2120, COMP2396, COMP2121 and COMP2119.',
+  'cut -d \' \' -f 2 splits on spaces and keeps field 2: Computer, Object-oriented, Discrete, Introduction.',
+  'sort puts them in alphabetical order.'],
+  sh: { files: { 'courses.txt': 'COMP2120 Computer Organization\nCOMP2396 Object-oriented Programming and Java\nCOMP3297 Software Engineering\nCOMP2121 Discrete Mathematics\nCOMP2119 Introduction to Data Structures and Algorithms\nCOMP3230 Principles of Operating Systems\nCOMP3234 Computer and Communication Networks\nCOMP3250 Design and Analysis of Algorithms\nCOMP3278 Introduction to Database Management Systems\n' }, cmd: 'cat courses.txt | grep "COMP2" | cut -d \' \' -f 2 | sort', out: 'Computer\nDiscrete\nIntroduction\nObject-oriented' },
+  points: ['Only the second word of each title (field 2 with a space delimiter).', 'Sorted, one per line.'] },
+'y2122-B6': { answer: 'false true', work: [
+  '<b>reach42(68)</b>: 68 ≥ 42 and ≠ 42. 68 % 5 ≠ 0, skip. 68 % 2 == 0, so try reach42(34): 34 &lt; 42, false.',
+  '68 % 4 == 0: one = 8, two = 6, one × two = 48 ≠ 0, so return reach42(68 − 48) = reach42(20) = false.',
+  '<b>reach42(52)</b>: 52 % 5 ≠ 0. 52 % 2 == 0: reach42(26) is false.',
+  '52 % 4 == 0: one = 2, two = 5, one × two = 10. reach42(52 − 10) = reach42(42) = <b>true</b>.'],
+  points: ['Follow each if in order and stop at the first return.', 'Trailing space after "true".'] },
+'y2122-B7': { answer: 'line 2:  int currmin = A[0];', work: ['currmin is a local variable with no starting value, so it holds whatever was in memory.', 'If that garbage is smaller than every element (for example a negative number), nothing ever replaces it and it is returned.', 'Start with the first element. (Then the loop could start at i = 1, but it does not have to.)'],
+  full: R`#include <iostream>
+using namespace std;
+
+int minval(int *A, int n) {
+    int currmin = A[0];
+    for (int i = 0; i < n; i++)
+        if (A[i] < currmin)
+            currmin = A[i];
+    return currmin;
+}
+
+int main() {
+    int a[] = { 7, 3, 9, 4 }, b[] = { 5 };
+    cout << minval(a, 4) << " " << minval(b, 1) << endl;
+    return 0;
+}`, out: '3 5', points: ['Names line 2.', 'Initialises currmin to A[0] (or INT_MAX).'] },
+'y2122-B8': { answer: 'line 8: use strcmp; lines 19, 21, 23: add break;', work: [
+  '<b>Line 8.</b> user is a char array, so <code>user != "alex"</code> compares the array\'s address with the literal\'s address. They are never equal, so every user, even alex, exits. Use <code>strcmp(user, "alex") != 0</code> (string.h is already included).',
+  '<b>Lines 19, 21, 23.</b> A case without break falls through into the next one. With 118 the program prints all three messages including Welcome; with 53 it prints Almost there and Welcome. With 42 it prints Welcome and then falls into default and exits with status 1.',
+  'Adding <code>break;</code> after each message fixes it. (Also needed to compile as a full program: <code>#include &lt;iostream&gt;</code>, <code>#include &lt;cstdlib&gt;</code> and <code>using namespace std;</code>.)'],
+  full: R`#include <iostream>
+#include <cstdlib>
+#include <string.h>
+using namespace std;
+
+int main() {
+    cout << "Please input username:\n";
+    char user[1024];
+    cin >> user;
+
+    if (strcmp(user, "alex") != 0) {
+        exit(1);
+    }
+
+    cout << "Please input the magic number:\n";
+    int magic;
+    cin >> magic;
+
+    switch (magic) {
+        case 118:
+            cout << "Getting close.\n";
+            break;
+        case 53:
+            cout << "Almost there.\n";
+            break;
+        case 42:
+            cout << "Welcome!\n";
+            break;
+        default:
+            exit(1);
+    }
+    return 0;
+}`, stdin: 'alex 42', out: 'Please input username:\nPlease input the magic number:\nWelcome!', outNote: 'Input "alex" then 42.',
+  points: ['strcmp instead of != on a C-string.', 'break after each case.', 'Line numbers stated.'] },
+
+/* =================== 2021-22 Section C =================== */
+'y2122-C1a': { answer: 'Iterative BinaryNumber (below)', work: ['421 = 210 × 2 + 1, 210 = 105 × 2 + 0, ...: each remainder decimal % 2 is the next binary digit from the right.', 'So put each new digit in <b>front</b> of the string, then divide by 2. Stop when the number reaches 0.', 'Special case: 0 itself, or the loop never runs and you return "".'],
+  full: R`#include <iostream>
+#include <string>
+using namespace std;
+
+string BinaryNumber(int decimal) {
+    if (decimal == 0)
+        return "0";
+    string binary = "";
+    while (decimal > 0) {
+        binary = (decimal % 2 == 0 ? "0" : "1") + binary;
+        decimal = decimal / 2;
+    }
+    return binary;
+}
+
+int main() {
+    int decimal;
+    cin >> decimal;
+    string binary_str = BinaryNumber(decimal);
+    cout << binary_str;
+    return 0;
+}`, stdin: '421', out: '110100101', outNote: 'Input 421, the example in the question.',
+  points: ['Complete function with the given header.', 'while loop with % 2 and / 2.', 'Digits added in the right order.', 'Handles 0.'] },
+'y2122-C1b': { answer: 'Recursive BinaryNumber (below)', work: ['Binary of n = binary of n / 2, followed by the digit n % 2.', 'Base case: 0 or 1 is a single digit.', 'The recursive call handles the higher digits, so the last digit is added at the <b>end</b>.'],
+  full: R`#include <iostream>
+#include <string>
+using namespace std;
+
+string BinaryNumber(int decimal) {
+    if (decimal < 2)
+        return decimal == 0 ? "0" : "1";
+    return BinaryNumber(decimal / 2) + (decimal % 2 == 0 ? "0" : "1");
+}
+
+int main() {
+    int decimal;
+    cin >> decimal;
+    string binary_str = BinaryNumber(decimal);
+    cout << binary_str;
+    return 0;
+}`, stdin: '42', out: '101010', outNote: 'Input 42 (the last row of the table).',
+  points: ['A base case that stops the recursion.', 'return in front of the recursive call.', 'Last digit appended after the recursive part.'] },
+'y2122-C2a': { answer: 'DeleteMiddleNode (below)', work: [
+  'Count the nodes: n.',
+  'The node to delete has index k = (n − 1) / 2 (integer division): n = 1 → 0, 2 → 0, 3 → 1, 4 → 1, 5 → 2. That matches every example in the question.',
+  'k ≥ 1: walk to the node at index k − 1 and set its next to next->next.',
+  'k = 0 is the catch. head is passed <b>by value</b>, so assigning to it inside the function does nothing for the caller. With two nodes, copy the second node\'s value into the first and unlink the second: the list now reads as if the first was deleted. With one node, the only way to empty the list is to clear the global <code>Node *head</code> the question declares, written <code>::head</code> because the parameter has the same name.',
+  'In the exam, write a one-line comment explaining this. If you may change the header, <code>Node *&amp;head</code> is the clean fix.'],
+  full: R`#include <iostream>
+using namespace std;
+
+struct Node {
+    int val;
+    Node *next;
+};
+
+Node *head;
+
+void DeleteMiddleNode(Node *head) {
+    if (head == NULL)
+        return;
+    int n = 0;
+    for (Node *p = head; p != NULL; p = p->next)
+        n++;
+    int k = (n - 1) / 2;
+    if (k == 0) {
+        if (head->next == NULL) {
+            ::head = NULL;
+        } else {
+            head->val = head->next->val;
+            head->next = head->next->next;
+        }
+        return;
+    }
+    Node *before = head;
+    for (int i = 0; i < k - 1; i++)
+        before = before->next;
+    before->next = before->next->next;
+}
+
+void build(int n) {                       // head -> 1 -> 2 -> ... -> n
+    head = NULL;
+    for (int i = n; i >= 1; i--) {
+        Node *p = new Node;
+        p->val = i;
+        p->next = head;
+        head = p;
+    }
+}
+
+void print() {
+    cout << "[";
+    for (Node *p = head; p != NULL; p = p->next)
+        cout << p->val << (p->next ? " " : "");
+    cout << "]" << endl;
+}
+
+int main() {
+    for (int n = 0; n <= 5; n++) {
+        build(n);
+        DeleteMiddleNode(head);
+        print();
+    }
+    return 0;
+}`, out: '[]\n[]\n[2]\n[1 3]\n[1 3 4]\n[1 2 4 5]', outNote: 'Lists of 0 to 5 nodes (1 2 3 ...), each after one call.',
+  points: ['Empty list does nothing.', 'Correct index for odd and even lengths.', 'Unlinks via the node before.', 'Deals with the first node despite the by-value parameter.'] },
+'y2122-C2b': { answer: 'Add Node *prev; to the struct and Node *tail; after head', work: ['Each node needs a link backwards: <code>Node *prev;</code> inside the struct.', 'The list needs direct access to its last node: a global <code>Node *tail;</code> next to <code>Node *head;</code>.'],
+  points: ['prev inside the struct.', 'tail outside it.'] },
+'y2122-C2c': { answer: 'ReverseDoublyLinkedList (below)', work: [
+  'In a reversed list every node\'s next is its old prev and its prev is its old next. So walk the list once and swap the two pointers in each node.',
+  'Save <code>cur-&gt;next</code> before overwriting it, then move on to that saved node.',
+  'Finally the old head is the new tail and the other way round. head_ptr and tail_ptr are pointers to the caller\'s pointers, so swap <code>*head_ptr</code> and <code>*tail_ptr</code>.',
+  'Empty list: the loop does not run and swapping two NULLs is harmless.'],
+  full: R`#include <iostream>
+using namespace std;
+
+struct Node {
+    int val;
+    Node *next;
+    Node *prev;
+};
+
+Node *head;
+Node *tail;
+
+void ReverseDoublyLinkedList(Node **head_ptr, Node **tail_ptr) {
+    Node *cur = *head_ptr;
+    while (cur != NULL) {
+        Node *nxt = cur->next;
+        cur->next = cur->prev;
+        cur->prev = nxt;
+        cur = nxt;
+    }
+    Node *old = *head_ptr;
+    *head_ptr = *tail_ptr;
+    *tail_ptr = old;
+}
+
+void append(int v) {
+    Node *p = new Node;
+    p->val = v;
+    p->next = NULL;
+    p->prev = tail;
+    if (tail == NULL) head = p;
+    else tail->next = p;
+    tail = p;
+}
+
+int main() {
+    for (int i = 1; i <= 4; i++)
+        append(i);
+    ReverseDoublyLinkedList(&head, &tail);
+    for (Node *p = head; p != NULL; p = p->next)       // forwards
+        cout << p->val << " ";
+    cout << "| ";
+    for (Node *p = tail; p != NULL; p = p->prev)       // backwards
+        cout << p->val << " ";
+    cout << endl;
+    return 0;
+}`, out: '4 3 2 1 | 1 2 3 4', outNote: 'Walking forwards from head and backwards from tail both give the reversed order, so both links were fixed.',
+  points: ['Swaps next and prev in every node.', 'Saves next before overwriting.', 'Updates both *head_ptr and *tail_ptr.'] },
+
+/* =================== 2023 quiz =================== */
+'q2023-Q1a': { answer: 'getWords.sh (below)', work: [
+  '<code>for w in $(cat "$1")</code>: the unquoted substitution is split on spaces, tabs and newlines, so w takes each word in order.',
+  'Keep a list of words already printed, one per line. <code>grep -qx</code> checks whether w is already a whole line in it: -x means the whole line must match (so apple does not match pineapple, the same job as the -w in the hint), -q means print nothing, just set the exit status.',
+  'If it is not there, print it and add it to the list.',
+  'No argument (<code>$# -lt 1</code>) or no words: nothing is printed.'],
+  full: SCRIPT('q2023-Q1a'), lang: 'sh',
+  sh: { files: { 'getWords.sh': SCRIPT('q2023-Q1a'), 'wordlist.txt': 'apple pineapple\nAPPLE Orange\t\t\torange\norange Apple\n', 'empty.txt': '' }, cmd: 'bash getWords.sh wordlist.txt; echo ---; bash getWords.sh empty.txt; bash getWords.sh; echo ---', out: 'apple\npineapple\nAPPLE\nOrange\norange\nApple\n---\n---' },
+  shNote: 'Tested on the wordlist.txt from the question, then on an empty file and with no argument (both print nothing between the --- lines).',
+  points: ['Exact output: one word per line, nothing else.', 'Case sensitive: apple and Apple are different.', 'Whole-word matching.', 'Silent when there is no argument.'] },
+'q2023-Q1b': { answer: 'getKeyword.sh (below)', work: [
+  'Put one word per line, <code>sort</code>, then <code>uniq -c</code>: each line becomes "count word", in alphabetical order of word.',
+  'The highest count: <code>sort -nr | head -n 1</code> gives the top line; <code>echo $max | cut -d \' \' -f 1</code> keeps just the number (unquoted echo removes the leading spaces uniq -c adds).',
+  'Read the alphabetical list line by line with <code>while read count word</code> and print every word whose count equals the maximum, as "word count".',
+  'The empty check stops the script printing anything (or an error) for a file with no words.'],
+  full: SCRIPT('q2023-Q1b'), lang: 'sh',
+  sh: { files: { 'getKeyword.sh': SCRIPT('q2023-Q1b'), 'wordlist.txt': 'apple pineapple\nAPPLE Orange\t\t\torange\norange Apple\n', 'ties.txt': 'b a\tc\nb a\n', 'empty.txt': '' }, cmd: 'bash getKeyword.sh wordlist.txt; echo ---; bash getKeyword.sh ties.txt; echo ---; bash getKeyword.sh empty.txt; bash getKeyword.sh; echo ---', out: 'orange 2\n---\na 2\nb 2\n---\n---' },
+  shNote: 'Tested on the question\'s wordlist.txt, on a file where a and b tie with 2 each (printed alphabetically), then on an empty file and with no argument.',
+  points: ['Word first, then the count, separated by one space.', 'All tied words, alphabetical.', 'Nothing printed for no words or no argument.'] },
+'q2023-Q2': { answer: 'reverse() (below)', work: [
+  'Standard digit reversal: r = r × 10 + N % 10, then N = N / 10, until N is 0.',
+  'Negative input: in C++, % and / keep the sign of N, so −456700 gives digits 0, 0, −7, −6, −5, −4 and r = −7654. Returning −r gives 7654.',
+  'Trailing zeros in the input become leading zeros of r, which do not show in a number.'],
+  full: R`#include <iostream>
+
+using namespace std;
+
+int reverse(int N) {
+    int r = 0;
+    while (N != 0) {
+        r = r * 10 + N % 10;
+        N = N / 10;
+    }
+    return -r;
+}
+
+int main() {
+
+    int N;
+    cin >> N;
+
+    cout << reverse(N) << endl;
+
+    return 0;
+}`, stdin: '-456700', out: '7654', outNote: 'Test 2 from the question.',
+  points: ['Exact output: just the number and a newline.', 'Sign flipped.', 'Trailing zeros dropped.'] },
+'q2023-Q3': { answer: 'Antiprime search (below)', work: [
+  'S(n): count divisors. Check d from 1 while d × d ≤ n; each divisor d below √n pairs with n / d, so add 2 (add 1 when d × d == n).',
+  'Antiprimes are the "record breakers": go through p = 1, 2, 3, ... and keep the largest S so far. p is antiprime exactly when S(p) is bigger than that record.',
+  'The first record breaker with p ≥ b is the answer. For b ≤ 1 that is 1.',
+  'Speed: for b = 100000 the answer is 110880. Counting divisors up to √n keeps this well under a second; counting up to n would be about 6 billion steps.'],
+  full: SCRIPT('q2023-Q3'), stdin: '700', out: '720', outNote: 'Test 4 from the question. The other tests (11 → 12, 12 → 12, −10 → 1, 45678 → 50400) were run too.',
+  points: ['A divisor-count function.', 'Record-breaker test, not "more divisors than b".', 'Handles b ≤ 0.', 'Fast enough for the largest test.'] },
 };
 })();

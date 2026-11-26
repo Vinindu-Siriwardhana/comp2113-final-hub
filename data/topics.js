@@ -8,7 +8,7 @@ window.TOPICS = [
   id: 'm1', n: '1', title: 'Linux Environment',
   blurb: 'Section A opens with Linux command MCQs, and Section B asks you to build a pipe. Free marks if you know the flags.',
   cards: [
-    { id: 'm1-nav', t: 'Files and directories', lang: 'sh', pp: '2019-20 A3, A4, A5',
+    { id: 'm1-nav', t: 'Files and directories', lang: 'sh', pp: '2019-20 A3, A4, A5 · 2021-22 A1, A2',
       code: `pwd                 # print working directory
 ls -l -a            # long listing, include hidden files
 cd ..   cd ~        # parent directory / home directory
@@ -39,7 +39,7 @@ chmod 400 foo.txt     # r-- --- ---   read-only for the owner`,
             'Numeric form: add r=4, w=2, x=1 for each of user, group, other.',
             'A script needs <code>x</code> before <code>./script.sh</code> will run.'],
       trap: 'The indicator is 10 characters: 1 type character, then 3 + 3 + 3. Count positions carefully in grep questions.' },
-    { id: 'm1-text', t: 'Text tools: grep, wc, sort, cut, uniq, diff', lang: 'sh', pp: '2019-20 A1, A2, B5',
+    { id: 'm1-text', t: 'Text tools: grep, wc, sort, cut, uniq, diff', lang: 'sh', pp: '2019-20 A1, A2, B5 · 2021-22 A3, A5, B5',
       code: `grep 'abc' file          # lines containing abc (case sensitive)
 wc file                  # lines  words  bytes
 wc -l file   wc -w file   wc -c file
@@ -55,7 +55,7 @@ head -15 file   tail -3 file`,
             '<code>sort</code> uses <code>-t</code> for the separator, <code>cut</code> uses <code>-d</code>. Do not mix them up.',
             'diff codes: <code>0a1</code> add, <code>2,3c3</code> change, <code>1d0</code> delete. <code>&lt;</code> lines come from the first file, <code>&gt;</code> from the second.'],
       trap: '<code>uniq</code> only removes adjacent duplicates, so the usual idiom is <code>sort file | uniq</code>. Plain <code>sort</code> puts "10" before "2"; use <code>-n</code>.' },
-    { id: 'm1-redir', t: 'Redirection and pipes', lang: 'sh', pp: '2019-20 B5',
+    { id: 'm1-redir', t: 'Redirection and pipes', lang: 'sh', pp: '2019-20 B5 · 2021-22 A4, B5',
       code: `ls -l > files.txt          # stdout to a file (overwrite)
 wc data.txt >> result.txt  # append
 g++ a.cpp -o a 2> err.txt  # stderr to a file
@@ -102,7 +102,7 @@ echo -n "no newline"`,
             'Shell has only one variable type: string.',
             'Unquoted values only work for a single word: <code>a=Apple pie</code> tries to run a command called pie.'],
       trap: '<code>pet = "dog"</code> is an error (shell looks for a command named pet). Single quotes never substitute.' },
-    { id: 'm2-sub', t: 'Command substitution and string operations', lang: 'sh',
+    { id: 'm2-sub', t: 'Command substitution and string operations', lang: 'sh', pp: '2023 quiz Q1',
       code: `a="\`cat file.txt\`"                       # output of a command
 n="\`wc -l file.txt | cut -d\\" \\" -f1\`"    # just the number of lines
 
@@ -118,7 +118,7 @@ echo $b              # 19`,
             'String index starts at 0 in <code>${s:pos:len}</code>.',
             'Inside a double-quoted backquote expression, inner double quotes must be escaped as <code>\\"</code>.'],
       trap: '<code>wc -l file</code> prints "3 file.txt". You must <code>cut</code> the first field to get just 3.' },
-    { id: 'm2-args', t: 'Command line arguments', lang: 'sh',
+    { id: 'm2-args', t: 'Command line arguments', lang: 'sh', pp: '2021-22 B4, 2023 quiz Q1',
       code: `#!/bin/bash
 echo "There are $# arguments"
 echo "$0"     # the script name
@@ -206,7 +206,7 @@ int mid = x / 10 % 100; // 23  (drop last digit, keep two)`,
             '<code>x % 10</code> is the last digit. <code>x / 10</code> removes the last digit.',
             'An uninitialised local variable holds garbage, not 0.'],
       trap: '<code>int slope = dy / dx;</code> silently throws the fraction away. This is the bug in Sample Q3.' },
-    { id: 'm3-ops', t: 'Operators: ++, compound assignment, logic', lang: 'cpp', pp: '2019-20 A6, B1, B2',
+    { id: 'm3-ops', t: 'Operators: ++, compound assignment, logic', lang: 'cpp', pp: '2019-20 A6, B1, B2 · 2021-22 A9, B1',
       code: R`int i = 5;
 int a = i++;     // a = 5, i = 6   (use, then increment)
 int b = ++i;     // b = 7, i = 7   (increment, then use)
@@ -223,7 +223,7 @@ x = 5;   // assignment          x == 5  // comparison`,
       pts: ['Precedence: <code>!</code>, then <code>* / %</code>, then <code>+ -</code>, then <code>&lt; &gt;</code>, then <code>== !=</code>, then <code>&amp;&amp;</code>, then <code>||</code>.',
             '<code>&amp;&amp;</code> stops at the first false, <code>||</code> at the first true.'],
       trap: '<code>if (x = 5)</code> assigns and is always true. <code>return (a = b);</code> returns b, not a comparison.' },
-    { id: 'm3-flow', t: 'if, switch, loops', lang: 'cpp',
+    { id: 'm3-flow', t: 'if, switch, loops', lang: 'cpp', pp: '2021-22 B8',
       code: R`if (x > 0) { } else if (x == 0) { } else { }
 
 switch (grade) {
@@ -311,7 +311,7 @@ gcd_main.o: gcd_main.cpp gcd.h
             'A target is rebuilt when it does not exist or is older than any dependency.',
             'One rule per .o file: the .o depends on its .cpp plus every header that .cpp includes.'],
       trap: 'The command line must start with a TAB, not spaces. In the exam, write "&lt;tab&gt;" or indent clearly.' },
-    { id: 'm4-vars', t: 'Variables, $@ $^ $<, phony targets', lang: 'make',
+    { id: 'm4-vars', t: 'Variables, $@ $^ $<, phony targets', lang: 'make', pp: '2021-22 A7',
       code: `FLAGS = -pedantic-errors -std=c++11
 OBJECTS = gcd.o gcd_main.o
 
@@ -350,7 +350,7 @@ void greet() { cout << "hi"; } // void: returns nothing`,
       pts: ['A function must be declared before it is called.',
             'Return type comes first, then the name, then the parameter list.'],
       trap: 'A prototype <em>declares</em>. It does not define.' },
-    { id: 'm5-pass', t: 'Pass by value vs pass by reference', lang: 'cpp', pp: 'Sample Q4(c)',
+    { id: 'm5-pass', t: 'Pass by value vs pass by reference', lang: 'cpp', pp: 'Sample Q4(c) · 2021-22 B2, B3',
       code: R`void byVal(int a)  { a = 99; }     // works on a copy
 void byRef(int &a) { a = 99; }     // works on the caller's variable
 
@@ -369,7 +369,7 @@ void fill(int arr[], int n);       // arrays: the function can modify them`,
             'Arrays are always passed as the address of the first element.',
             'A linked-list head that the function may change is passed as <code>Node *&amp;head</code>.'],
       trap: 'Changing a value parameter never changes the caller\'s variable. Trace the copy separately.' },
-    { id: 'm5-scope', t: 'Scope and shadowing', lang: 'cpp', pp: '2019-20 B2',
+    { id: 'm5-scope', t: 'Scope and shadowing', lang: 'cpp', pp: '2019-20 B2 · 2021-22 B2',
       code: R`int a = 1;                // main's a
 {
     cout << a;            // 1  (inner a not declared yet)
@@ -381,7 +381,7 @@ cout << a;                // 1  (inner a is gone)`,
             'An inner declaration with the same name hides the outer one inside that block only.',
             'Parameters are local variables of the function.'],
       trap: 'In 2019-20 B2 the first <code>cout &lt;&lt; a</code> inside the block still prints the outer a, because the inner declaration comes on the next line.' },
-    { id: 'm5-rec', t: 'Recursion', lang: 'cpp', pp: '2019-20 A9, C1(b)',
+    { id: 'm5-rec', t: 'Recursion', lang: 'cpp', pp: '2019-20 A9, C1(b) · 2021-22 B6, C1',
       code: R`int fact(int n) {
     if (n <= 1) return 1;            // base case
     return n * fact(n - 1);          // smaller problem
@@ -404,7 +404,7 @@ int BinarySearch(int arr[], int l, int r, int x) {
   id: 'm6', n: '6', title: 'Arrays and Strings',
   blurb: 'C-strings and the C++ string class both get tested. Know which functions belong to which.',
   cards: [
-    { id: 'm6-arr', t: 'Arrays', lang: 'cpp', pp: 'Sample Q7',
+    { id: 'm6-arr', t: 'Arrays', lang: 'cpp', pp: 'Sample Q7 · 2021-22 B7',
       code: R`int a[5] = {6, 5, 4};          // rest are 0: {6,5,4,0,0}
 int b[] = {1, 2, 3};           // size 3 from the initialiser
 int n = sizeof(b) / sizeof(b[0]);   // 3 (only where b was declared)
@@ -421,7 +421,7 @@ void reverseArray(int *array, int n) {
             'A 2D array parameter must give the column size: <code>void f(int g[][3], int rows)</code>.',
             'Arrays cannot be assigned or compared with <code>=</code> / <code>==</code> as a whole.'],
       trap: 'Inside a function, <code>sizeof(arr)</code> gives the pointer size, not the array size. Pass n as a parameter.' },
-    { id: 'm6-cstr', t: 'C-strings (char arrays)', lang: 'cpp', pp: '2019-20 A10, B3',
+    { id: 'm6-cstr', t: 'C-strings (char arrays)', lang: 'cpp', pp: '2019-20 A10, B3 · 2021-22 B8',
       code: R`#include <cstring>
 char s[] = "2019";          // 5 chars: '2','0','1','9','\0'
 char t[20];
@@ -543,7 +543,7 @@ cout << acc.get();        // 150`,
   id: 'm8', n: '8', title: 'Pointers, Dynamic Memory and Linked Lists',
   blurb: 'The heaviest topic. 2019-20 gave it four MCQs, three short questions and a 20-mark programming question.',
   cards: [
-    { id: 'm8-ptr', t: 'Pointer basics', lang: 'cpp', pp: '2019-20 A11, A13, B7',
+    { id: 'm8-ptr', t: 'Pointer basics', lang: 'cpp', pp: '2019-20 A11, A13, B7 · 2021-22 A12, A14',
       code: R`int n = 42;
 int *p = &n;       // & address-of:  p holds the address of n
 cout << *p;        // * dereference: 42
@@ -558,7 +558,7 @@ swap(&x, &y);`,
       pts: ['In a declaration <code>*</code> means "is a pointer". In an expression it means "the thing pointed to".',
             'Dereferencing NULL or an uninitialised pointer is a run-time error. Dereferencing a non-pointer is a compile error.'],
       trap: 'The <code>*</code> belongs to the variable name, not the type: <code>string* x, y;</code> makes only x a pointer.' },
-    { id: 'm8-arith', t: 'Pointers and arrays', lang: 'cpp', pp: '2019-20 A12, B4, B8',
+    { id: 'm8-arith', t: 'Pointers and arrays', lang: 'cpp', pp: '2019-20 A12, B4, B8 · 2021-22 A11',
       code: R`int t[] = {6, 5, 4, 3, 2, 1};
 int *tPtr = t;         // array name = address of element 0
 
@@ -590,7 +590,7 @@ node->val = 3;`,
             'Memory leak: losing the last pointer to heap memory without deleting it.',
             'Dangling pointer: using a pointer after its memory was deleted.'],
       trap: 'Returning the address of a local variable gives a dangling pointer. Return heap memory instead.' },
-    { id: 'm8-ll1', t: 'Linked list: node, traverse, insert at head', lang: 'cpp', pp: '2019-20 C2, Sample Q5',
+    { id: 'm8-ll1', t: 'Linked list: node, traverse, insert at head', lang: 'cpp', pp: '2019-20 C2, Sample Q5 · 2021-22 C2',
       code: R`struct Node {
     int val;
     Node *next;
@@ -613,7 +613,7 @@ void print(Node *head) {
             'Insert at head reverses the order: the newest node is first.',
             'Traversal uses a copy pointer so head is not lost.'],
       trap: 'Order matters: set <code>p-&gt;next = head</code> before <code>head = p</code>, or the old list is lost.' },
-    { id: 'm8-ll2', t: 'Linked list: insert at tail, delete, free', lang: 'cpp', pp: '2019-20 C2(a), C2(b)',
+    { id: 'm8-ll2', t: 'Linked list: insert at tail, delete, free', lang: 'cpp', pp: '2019-20 C2(a), C2(b) · 2021-22 C2(a)',
       code: R`void insertTail(Node *&head, int v) {
     Node *p = new Node;  p->val = v;  p->next = NULL;
     if (head == NULL) { head = p; return; }
@@ -702,7 +702,7 @@ for (mi = m.begin(); mi != m.end(); mi++)
             'An iterator behaves like a pointer: <code>*it</code>, <code>it-&gt;member</code>, <code>it++</code>.',
             'Use <code>!=</code> in the loop condition. <code>&lt;</code> only works for vector iterators.'],
       trap: 'Dereferencing <code>end()</code> is an error. A <code>const</code> container needs <code>const_iterator</code>.' },
-    { id: 'm9-list', t: 'list', lang: 'cpp', pp: 'Sample Q6',
+    { id: 'm9-list', t: 'list', lang: 'cpp', pp: 'Sample Q6 · 2021-22 A15',
       code: R`#include <list>
 list<string> L;
 L.push_back("b");   L.push_front("a");
@@ -758,7 +758,7 @@ printf("%d%%\n", 50);          // 50%`,
             '<code>%f</code> prints 6 decimal places by default.',
             'C has no <code>cin</code>, <code>cout</code>, <code>string</code>, <code>new</code>, references or <code>bool</code> (without stdbool.h).'],
       trap: 'Forgetting <code>&amp;</code> in <code>scanf("%d", a)</code> crashes. <code>scanf("%s", &amp;s)</code> does not need the &amp;.' },
-    { id: 'm10-str', t: 'C strings and string.h', lang: 'c', pp: '2019-20 A10',
+    { id: 'm10-str', t: 'C strings and string.h', lang: 'c', pp: '2019-20 A10 · 2021-22 A8',
       code: R`#include <string.h>
 char a[20] = "comp";
 char b[] = "2113";
@@ -772,7 +772,7 @@ fgets(a, 20, stdin);     // read a line (keeps the '\n')`,
       pts: ['Strings are char arrays ending in <code>\'\\0\'</code>.',
             'The destination of <code>strcpy</code> / <code>strcat</code> must be big enough.'],
       trap: '<code>if (a == b)</code> compares addresses. <code>a = "hi";</code> does not compile for an array.' },
-    { id: 'm10-mem', t: 'malloc and free', lang: 'c', pp: '2019-20 B8',
+    { id: 'm10-mem', t: 'malloc and free', lang: 'c', pp: '2019-20 B8 · 2021-22 A13',
       code: R`#include <stdlib.h>
 int n = 42;
 double *p = (double *)malloc(sizeof(double) * n);

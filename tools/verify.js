@@ -49,7 +49,7 @@ function progTest(id, item, sol) {
 for (const p of W.PROG) progTest(p.id, p, p.sol);
 for (const paper of W.PAPERS) for (const s of paper.sections) for (const it of s.items) {
   const id = paper.id + ' ' + it.n;
-  if (it.out && it.code) run(id, wrap(it.code), it.out);
+  if (it.out && it.code && !it.codeLang) run(id, wrap(it.code), it.out);   // shell/text items are checked by their answer key
   if (it.test) progTest(id, it, it.test.main && !it.test.full && /^\s*y = /.test(it.ans) ? '' : it.ans);
 }
 
@@ -132,7 +132,12 @@ for (const x of all) { if (ids.has(x.id)) { fail++; console.log('DUPLICATE id ' 
 const mods = new Set(W.TOPICS.map(t => t.id));
 for (const x of [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG]) if (!mods.has(x.m)) { fail++; console.log('BAD module on ' + x.id); }
 for (const q of W.MCQ) if (!(q.a >= 0 && q.a < q.opts.length)) { fail++; console.log('BAD answer index ' + q.id); }
-for (const s of (W.PLAN || [])) for (const t of s.tasks) if (t.go && !/^(topics|types|practice|papers|mock|external|sheet)(:|$)/.test(t.go)) { fail++; console.log('BAD plan link ' + t.go); }
+for (const s of (W.PLAN || [])) for (const t of s.tasks) if (t.go && !/^(topics|types|practice|drill|cheats|checkpoints|papers|answers|mock|external|sheet)(:|$)/.test(t.go)) { fail++; console.log('BAD plan link ' + t.go); }
+// every not-examined id must name a real drill row, question, topic card or checkpoint twin
+vm.runInContext(fs.readFileSync(path.join(root, 'data', 'scope.js'), 'utf8'), ctx, { filename: 'scope.js' });
+const known = new Set([...[...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG].map(q => q.id), ...W.TOPICS.flatMap(t => t.cards.map(c => c.id)),
+  ...W.CHECKPOINTS.flatMap(c => c.twins.map(t => t.id)), ...Object.entries(W.DRILL).flatMap(([m, rows]) => rows.map((r, i) => `d-${m}-${i}`))]);
+for (const id of Object.values(W.OUT_OF_SCOPE).flat()) if (!known.has(id)) { fail++; console.log('BAD out-of-scope id ' + id); }
 
 console.log(`\n${pass} passed, ${fail} failed  (practise-here sets ${xN}, answer keys ${keyN} with ${keyRun} full programs, checkpoint twins ${twinN}, drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
 fs.rmSync(tmp, { recursive: true, force: true });

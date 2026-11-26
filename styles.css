@@ -169,7 +169,12 @@ textarea.ans-in { width: 100%; min-height: 110px; resize: vertical; display: blo
 
 /* exam format */
 .wbar { display: grid; grid-template-columns: 150px 1fr 44px; gap: 10px; align-items: center; font-size: .9rem; padding: 4px 0; }
-.wbar .bar { height: 12px; }
+.wbar .bars { display: grid; gap: 3px; }
+.wbar .bar { height: 8px; }
+.wbar .bar.b2 i, .wlegend .k2 { background: var(--a2); }
+.wbar .v { line-height: 1.15; font-size: .82rem; }
+.wlegend { display: flex; gap: 16px; margin-bottom: 6px; }
+.wlegend i { display: inline-block; width: 12px; height: 8px; border-radius: 99px; background: var(--a1); margin-right: 6px; }
 .wbar .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
 .wbar small { grid-column: 2 / 4; color: var(--muted); margin-top: -4px; }
 table.plain { border-collapse: collapse; width: 100%; font-size: .93rem; }
