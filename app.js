@@ -33,6 +33,10 @@ Object.entries(window.DRILL || {}).forEach(([m, rows]) => {
   });
 });
 (window.CHECKPOINTS || []).forEach(cp => cp.twins.forEach(t => { Q[t.id] = Object.assign({ label: 'Twin' }, t); }));
+const XSET = Object.fromEntries((window.XSETS || []).map(s => [s.id, s]));
+(window.XSETS || []).forEach(s => s.qs.forEach(q => {
+  Q[q.id] = Object.assign(q.type === 'trace' ? { q: 'Write down the exact output of this program.' } : {}, q);
+}));
 const ui = {};                                   // transient per-question state
 const U = id => ui[id] || (ui[id] = {});
 
@@ -448,12 +452,33 @@ function timer() {
 }
 
 /* ---------- tab: external ---------- */
+const XS = window.XSETS || [];
+const xDone = s => count(s.qs, q => S.q[q.id] === 'ok');
+function viewXSet(s) {
+  const flag = route.args[1] || '';
+  const done = xDone(s), items = s.qs.filter(q => flag !== 'todo' || S.q[q.id] !== 'ok');
+  return `<div class="row" style="margin-top:6px"><button class="btn sm" data-go="external">← Back to More practice</button></div>
+    <div class="sec-head"><h2>${esc(s.title)}</h2><span class="meta">${done} of ${s.qs.length} correct</span></div>
+    <p class="lead">${esc(s.blurb)} Written in the style of <a href="${esc(s.src)}" target="_blank" rel="noopener">${esc(s.like)}</a>, but with the answers built in: pick an option, check your output, or reveal the model answer. Every output and program here was compiled and run with g++.</p>
+    <div class="chips">${XS.map(x => `<button class="chip${x === s ? ' on' : ''}" data-go="external:${x.id}:${flag}">${esc(x.title)}<span class="n">${xDone(x)}/${x.qs.length}</span></button>`).join('')}
+      <button class="chip${flag === 'todo' ? ' on' : ''}" data-go="external:${s.id}:${flag === 'todo' ? '' : 'todo'}">Wrong or not done</button></div>
+    <div class="bar ok" style="margin-bottom:14px"><i style="width:${pct([done, s.qs.length])}%"></i></div>
+    <div class="stack">${items.length ? items.map((q, i) => renderQ(q.id, String(i + 1))).join('') : '<p class="lead">All correct in this set. Clear the filter to see every question.</p>'}</div>`;
+}
 function viewExternal() {
+  const set = XSET[route.args[0]];
+  if (set) return viewXSet(set);
+  const nX = XS.reduce((n, s) => n + s.qs.length, 0);
   return `<div class="sec-head"><h2>More practice from other sites</h2><span class="meta">${count(EXTERNAL.flatMap(g => g.items), i => S.ext[i.id])} of ${EXTERNAL.flatMap(g => g.items).length} done</span></div>
     <p class="lead">Start with real HKU papers, then written-exam questions from other universities, then the coding sites. LeetCode and HackerRank check your code by running it, which is good for correctness, but the exam is hand-written and stays close to the course notes, so write each solution on paper first. The lists are limited to what COMP2113 actually tests.</p>
+    ${XS.length ? `<div class="sec-head"><h2 style="font-size:1.1rem">Practise here, with answers</h2><span class="meta">${nX} questions</span></div>
+    <p class="small muted" style="margin:0 0 10px">The USC, GeeksforGeeks and Liang pages hide their answers or keep them in a separate PDF. These sets are new questions in the same style and at the same level, with every answer one click away.</p>
+    <div class="grid2 cheats" style="margin-bottom:18px">${XS.map(s => `<a class="card cheat" href="#external:${s.id}"><span class="tag">${s.qs.length} questions</span><h3>${esc(s.title)}</h3>
+      <p class="why">${esc(s.blurb)}</p><small>${xDone(s)} of ${s.qs.length} correct · style of ${esc(s.like)}</small></a>`).join('')}</div>` : ''}
     <div class="stack ext">${EXTERNAL.map(g => `<section class="card"><div class="row"><h3 style="font-size:1.05rem;flex:1">${esc(g.title)}</h3>${modTag(g.m)}</div>
       <p class="why">${esc(g.why)}</p><ul>${g.items.map(i => `<li><input type="checkbox" id="e-${i.id}" data-ext="${i.id}" ${S.ext[i.id] ? 'checked' : ''} aria-label="Done: ${esc(i.t)}">
-        <div><a href="${esc(i.u)}" target="_blank" rel="noopener">${esc(i.t)}</a><small>${esc(i.n)}</small></div></li>`).join('')}</ul></section>`).join('')}</div>`;
+        <div><a href="${esc(i.u)}" target="_blank" rel="noopener">${esc(i.t)}</a><small>${esc(i.n)}</small></div>
+        ${i.set && XSET[i.set] ? `<button class="go" data-go="external:${i.set}">Practise here</button>` : '<span></span>'}</li>`).join('')}</ul></section>`).join('')}</div>`;
 }
 
 /* ---------- tab: visual cheat sheets ---------- */
@@ -487,7 +512,7 @@ function viewSheet() {
 const VIEWS = { plan: viewPlan, types: viewTypes, topics: viewTopics, cheats: viewCheats, practice: viewPractice, drill: viewDrill, checkpoints: viewCheckpoints, papers: viewPapers, answers: viewAnswers, mock: viewMock, external: viewExternal, sheet: viewSheet };
 function render() {
   $('#view').innerHTML = VIEWS[route.tab]();
-  document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice' || route.tab === 'drill') el.dataset.num = String(i + 1); });
+  document.querySelectorAll('#view .q[data-q]').forEach((el, i) => { if (route.tab === 'practice' || route.tab === 'drill' || route.tab === 'external') el.dataset.num = String(i + 1); });
   header(); timer();
 }
 

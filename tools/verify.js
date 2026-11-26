@@ -107,8 +107,26 @@ for (const [m, rows] of Object.entries(W.DRILL || {})) rows.forEach((r, i) => {
   if (flag === 'run') run(id, wrap(code), o[a]);
 });
 
+// ---- "practise here" sets on the More practice tab ----
+vm.runInContext(fs.readFileSync(path.join(root, 'data', 'xsets.js'), 'utf8'), ctx, { filename: 'xsets.js' });
+let xN = 0;
+const xsetIds = new Set();
+for (const s of W.XSETS || []) for (const q of s.qs) {
+  xN++;
+  const id = 'xset ' + q.id;
+  xsetIds.add(q.id);
+  if (!q.m || !['mcq', 'trace', 'short', 'prog'].includes(q.type)) { fail++; console.log('BAD xset item ' + id); continue; }
+  if (q.type === 'mcq') {
+    if (!(q.a >= 0 && q.a < q.opts.length) || new Set(q.opts).size !== q.opts.length) { fail++; console.log('BAD options ' + id); }
+    if (q.run) run(id, wrap(q.code), q.opts[q.a]);
+  }
+  if (q.type === 'trace') run(id, wrap(q.code), q.out);
+  if (q.type === 'prog') progTest(id, q, q.sol);
+}
+for (const s of W.EXTERNAL || []) for (const i of s.items) if (i.set && !(W.XSETS || []).some(x => x.id === i.set)) { fail++; console.log('BAD set link ' + i.id); }
+
 // ---- structural checks ----
-const ids = new Set();
+const ids = new Set(xsetIds);
 const all = [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG, ...W.TOPICS.flatMap(t => t.cards)];
 for (const x of all) { if (ids.has(x.id)) { fail++; console.log('DUPLICATE id ' + x.id); } ids.add(x.id); }
 const mods = new Set(W.TOPICS.map(t => t.id));
@@ -116,6 +134,6 @@ for (const x of [...W.MCQ, ...W.TRACE, ...W.SHORT, ...W.PROG]) if (!mods.has(x.m
 for (const q of W.MCQ) if (!(q.a >= 0 && q.a < q.opts.length)) { fail++; console.log('BAD answer index ' + q.id); }
 for (const s of (W.PLAN || [])) for (const t of s.tasks) if (t.go && !/^(topics|types|practice|papers|mock|external|sheet)(:|$)/.test(t.go)) { fail++; console.log('BAD plan link ' + t.go); }
 
-console.log(`\n${pass} passed, ${fail} failed  (answer keys ${keyN} with ${keyRun} full programs, checkpoint twins ${twinN}, drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
+console.log(`\n${pass} passed, ${fail} failed  (practise-here sets ${xN}, answer keys ${keyN} with ${keyRun} full programs, checkpoint twins ${twinN}, drill ${drillN}, MCQ ${W.MCQ.length}, trace ${W.TRACE.length}, short ${W.SHORT.length}, prog ${W.PROG.length}, topic cards ${W.TOPICS.reduce((n, t) => n + t.cards.length, 0)})`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(fail ? 1 : 0);
